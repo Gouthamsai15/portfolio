@@ -9,7 +9,6 @@ A full-stack Next.js SaaS application that turns uploaded resume PDFs into live 
 - Supabase PostgreSQL + Storage + Auth
 - Gemini API via `@google/generative-ai`
 - `pdf-parse` for resume extraction
-- Vercel-ready deployment shape
 
 ## Features
 
