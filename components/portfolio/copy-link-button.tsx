@@ -24,7 +24,7 @@ export function CopyLinkButton({
       type="button"
       onClick={handleCopy}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold",
+        "inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-xs font-semibold sm:w-auto sm:text-sm",
         tone === "dark"
           ? "border border-white/12 bg-white/[0.06] text-white hover:bg-white/[0.12]"
           : "border border-black/10 bg-white/80 text-slate-900 hover:bg-white",

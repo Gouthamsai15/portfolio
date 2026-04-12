@@ -39,9 +39,9 @@ export function TypewriterRole({ text }: { text: string }) {
   }, [display, isDeleting, text]);
 
   return (
-    <span className="inline-flex items-center gap-2 font-display text-2xl font-medium text-[var(--secondary-color)] sm:text-3xl">
+    <span className="inline-flex items-center gap-2 font-display text-lg font-medium text-[var(--secondary-color)] sm:text-3xl">
       {display}
-      <span className="h-7 w-px animate-pulse bg-[var(--secondary-color)]" />
+      <span className="h-5 w-px animate-pulse bg-[var(--secondary-color)] sm:h-7" />
     </span>
   );
 }

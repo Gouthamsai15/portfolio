@@ -61,11 +61,11 @@ export function PortfolioGeneratorForm() {
         viewport={{ once: true, amount: 0.25 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
         action={handleSubmit}
-        className="glass-panel space-y-6 rounded-[2rem] p-6 sm:p-7"
+        className="glass-panel space-y-5 rounded-[1.75rem] p-4 sm:space-y-6 sm:rounded-[2rem] sm:p-7"
       >
         <div className="space-y-2">
-          <p className="font-display text-2xl font-semibold text-slate-950">Create portfolio</p>
-          <p className="text-sm leading-6 text-muted">
+          <p className="font-display text-xl font-semibold text-slate-950 sm:text-2xl">Create portfolio</p>
+          <p className="text-xs leading-6 text-muted sm:text-sm">
             No signup required. Just upload the resume and generate the site.
           </p>
         </div>
@@ -87,7 +87,7 @@ export function PortfolioGeneratorForm() {
           </label>
         </div>
 
-        <div className="rounded-3xl border border-black/8 bg-white/72 p-4">
+        <div className="rounded-[1.5rem] border border-black/8 bg-white/72 p-4 sm:rounded-3xl">
           <label className="space-y-3 text-sm font-medium text-slate-800">
             Upload Resume (PDF)
             <Input
@@ -105,7 +105,7 @@ export function PortfolioGeneratorForm() {
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-display text-xl font-semibold text-slate-950">Choose your template</h3>
+            <h3 className="font-display text-lg font-semibold text-slate-950 sm:text-xl">Choose your template</h3>
             <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-medium text-white">
               5 styles
             </span>
@@ -120,17 +120,17 @@ export function PortfolioGeneratorForm() {
                   type="button"
                   onClick={() => setSelectedTemplate(template.id)}
                   className={cn(
-                    "rounded-3xl border px-4 py-4 text-left",
+                    "rounded-[1.5rem] border px-4 py-3 text-left sm:rounded-3xl sm:py-4",
                     isActive
                       ? "border-[var(--primary-color)] bg-slate-950 text-white shadow-xl shadow-slate-950/15"
                       : "border-black/8 bg-white/72 text-slate-900 hover:border-black/20",
                   )}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-display text-lg font-semibold">{template.name}</p>
-                      <p className={cn("mt-1 text-sm", isActive ? "text-white/75" : "text-muted")}>{template.persona}</p>
-                    </div>
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                      <p className="font-display text-base font-semibold sm:text-lg">{template.name}</p>
+                      <p className={cn("mt-1 text-xs sm:text-sm", isActive ? "text-white/75" : "text-muted")}>{template.persona}</p>
+                      </div>
                     {isActive && <CheckCircle2 className="mt-1 h-5 w-5 text-[var(--secondary-color)]" />}
                   </div>
                 </button>
@@ -142,7 +142,7 @@ export function PortfolioGeneratorForm() {
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="space-y-2 text-sm font-medium text-slate-800">
             Primary Color
-            <div className="flex items-center gap-3 rounded-3xl border border-black/8 bg-white/72 px-4 py-3">
+            <div className="flex items-center gap-3 rounded-[1.5rem] border border-black/8 bg-white/72 px-4 py-3 sm:rounded-3xl">
               <input
                 type="color"
                 name="colorPrimary"
@@ -155,7 +155,7 @@ export function PortfolioGeneratorForm() {
           </label>
           <label className="space-y-2 text-sm font-medium text-slate-800">
             Secondary Color
-            <div className="flex items-center gap-3 rounded-3xl border border-black/8 bg-white/72 px-4 py-3">
+            <div className="flex items-center gap-3 rounded-[1.5rem] border border-black/8 bg-white/72 px-4 py-3 sm:rounded-3xl">
               <input
                 type="color"
                 name="colorSecondary"
@@ -195,7 +195,7 @@ export function PortfolioGeneratorForm() {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+              className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700 sm:text-sm"
             >
               {error}
             </motion.p>
@@ -206,7 +206,7 @@ export function PortfolioGeneratorForm() {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+              className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800 sm:text-sm"
             >
               Portfolio created at{" "}
               <Link href={successUrl} className="font-semibold underline underline-offset-4">

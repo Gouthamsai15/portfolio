@@ -12,18 +12,18 @@ export function ModernDeveloperDark({ record, portfolioUrl }: PortfolioTemplateP
         <div className="absolute left-[6%] top-20 h-56 w-56 rounded-full bg-[var(--primary-color)]/20 blur-[120px]" />
         <div className="absolute bottom-16 right-[8%] h-72 w-72 rounded-full bg-[var(--secondary-color)]/20 blur-[140px]" />
       </div>
-      <div className="relative mx-auto max-w-6xl px-6 py-10 sm:px-8">
-        <section className="dark-panel rounded-[2rem] p-7 sm:p-9">
+      <div className="relative mx-auto max-w-6xl px-4 py-5 sm:px-8 sm:py-10">
+        <section className="dark-panel rounded-[1.5rem] p-5 sm:rounded-[2rem] sm:p-9">
           <div className="flex flex-wrap items-start justify-between gap-6">
-            <div className="max-w-3xl space-y-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/45">
+            <div className="max-w-3xl space-y-4 sm:space-y-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45 sm:text-xs sm:tracking-[0.32em]">
                 {user.username}
               </p>
-              <h1 className="font-display text-5xl font-semibold tracking-tight sm:text-6xl">
+              <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-6xl">
                 {content.name}
               </h1>
               <TypewriterRole text={content.role} />
-              <p className="max-w-2xl text-lg leading-8 text-white/72">{content.about}</p>
+              <p className="max-w-2xl text-sm leading-7 text-white/72 sm:text-lg sm:leading-8">{content.about}</p>
             </div>
             <PortfolioActions portfolioUrl={portfolioUrl} resumeUrl={user.resume_url} tone="dark" />
           </div>
@@ -31,32 +31,32 @@ export function ModernDeveloperDark({ record, portfolioUrl }: PortfolioTemplateP
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[0.66fr_0.34fr]">
           <section className="space-y-6">
-            <div className="dark-panel rounded-[2rem] p-7">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/45">Projects</p>
+            <div className="dark-panel rounded-[1.5rem] p-5 sm:rounded-[2rem] sm:p-7">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-white/45 sm:text-xs sm:tracking-[0.3em]">Projects</p>
               <div className="mt-5 grid gap-4">
                 {content.projects.map((project) => (
                   <article
                     key={`${project.title}-${project.description}`}
-                    className="rounded-[1.6rem] border border-white/10 bg-white/[0.04] p-5"
+                    className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4 sm:rounded-[1.6rem] sm:p-5"
                   >
-                    <h2 className="font-display text-2xl font-semibold">{project.title}</h2>
+                    <h2 className="font-display text-xl font-semibold sm:text-2xl">{project.title}</h2>
                     <p className="mt-3 text-sm leading-7 text-white/72">{project.description}</p>
                   </article>
                 ))}
               </div>
             </div>
 
-            <div className="dark-panel rounded-[2rem] p-7">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/45">Experience</p>
+            <div className="dark-panel rounded-[1.5rem] p-5 sm:rounded-[2rem] sm:p-7">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-white/45 sm:text-xs sm:tracking-[0.3em]">Experience</p>
               <div className="mt-5 space-y-5">
                 {content.experience.map((item) => (
                   <article
                     key={`${item.company}-${item.role}`}
-                    className="rounded-[1.6rem] border border-white/10 bg-black/20 p-5"
+                    className="rounded-[1.25rem] border border-white/10 bg-black/20 p-4 sm:rounded-[1.6rem] sm:p-5"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <h3 className="font-display text-2xl font-semibold">{item.role}</h3>
+                        <h3 className="font-display text-xl font-semibold sm:text-2xl">{item.role}</h3>
                         <p className="text-sm text-[var(--secondary-color)]">{item.company}</p>
                       </div>
                       <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-white/60">
@@ -71,8 +71,8 @@ export function ModernDeveloperDark({ record, portfolioUrl }: PortfolioTemplateP
           </section>
 
           <aside className="space-y-6">
-            <div className="dark-panel rounded-[2rem] p-7">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/45">Skills</p>
+            <div className="dark-panel rounded-[1.5rem] p-5 sm:rounded-[2rem] sm:p-7">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-white/45 sm:text-xs sm:tracking-[0.3em]">Skills</p>
               <div className="mt-5 flex flex-wrap gap-3">
                 {content.skills.map((skill) => (
                   <span
@@ -85,12 +85,12 @@ export function ModernDeveloperDark({ record, portfolioUrl }: PortfolioTemplateP
               </div>
             </div>
 
-            <div className="dark-panel rounded-[2rem] p-7">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/45">Education</p>
+            <div className="dark-panel rounded-[1.5rem] p-5 sm:rounded-[2rem] sm:p-7">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-white/45 sm:text-xs sm:tracking-[0.3em]">Education</p>
               <div className="mt-5 space-y-4">
                 {content.education.map((item) => (
-                  <article key={`${item.degree}-${item.institution}`} className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-                    <h3 className="font-display text-xl font-semibold">{item.degree}</h3>
+                  <article key={`${item.degree}-${item.institution}`} className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4 sm:rounded-3xl">
+                    <h3 className="font-display text-lg font-semibold sm:text-xl">{item.degree}</h3>
                     <p className="mt-1 text-sm text-white/72">{item.institution}</p>
                     <p className="mt-2 text-xs uppercase tracking-[0.25em] text-[var(--secondary-color)]">
                       {item.year}
@@ -100,8 +100,8 @@ export function ModernDeveloperDark({ record, portfolioUrl }: PortfolioTemplateP
               </div>
             </div>
 
-            <div className="dark-panel rounded-[2rem] p-7">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/45">Contact</p>
+            <div className="dark-panel rounded-[1.5rem] p-5 sm:rounded-[2rem] sm:p-7">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-white/45 sm:text-xs sm:tracking-[0.3em]">Contact</p>
               <div className="mt-5 space-y-3 text-sm text-white/78">
                 {content.contact.email ? (
                   <a className="flex items-center gap-3" href={`mailto:${content.contact.email}`}>

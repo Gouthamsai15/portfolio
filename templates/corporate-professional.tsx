@@ -7,13 +7,13 @@ export function CorporateProfessional({ record, portfolioUrl }: PortfolioTemplat
 
   return (
     <div className="min-h-screen bg-[#f5f6f8] text-slate-900">
-      <div className="mx-auto max-w-6xl px-6 py-10 sm:px-8">
-        <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_32px_80px_rgba(15,23,42,0.08)]">
+      <div className="mx-auto max-w-6xl px-4 py-5 sm:px-8 sm:py-10">
+        <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_32px_80px_rgba(15,23,42,0.08)] sm:rounded-[2rem]">
           <div className="grid lg:grid-cols-[0.34fr_0.66fr]">
-            <aside className="bg-slate-950 px-7 py-8 text-white sm:px-8">
-              <p className="text-xs uppercase tracking-[0.32em] text-white/45">Corporate Professional</p>
-              <h1 className="mt-4 font-display text-4xl font-semibold tracking-tight">{content.name}</h1>
-              <p className="mt-3 text-lg text-white/72">{content.role}</p>
+            <aside className="bg-slate-950 px-5 py-6 text-white sm:px-8 sm:py-8">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-white/45 sm:text-xs sm:tracking-[0.32em]">Corporate Professional</p>
+              <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight sm:text-4xl">{content.name}</h1>
+              <p className="mt-3 text-base text-white/72 sm:text-lg">{content.role}</p>
               <p className="mt-6 text-sm leading-7 text-white/72">{content.about}</p>
 
               <div className="mt-8 space-y-6">
@@ -63,7 +63,7 @@ export function CorporateProfessional({ record, portfolioUrl }: PortfolioTemplat
                   <div className="mt-4 space-y-4">
                     {content.education.map((item) => (
                       <article key={`${item.degree}-${item.institution}`}>
-                        <h3 className="font-display text-xl font-semibold">{item.degree}</h3>
+                        <h3 className="font-display text-lg font-semibold sm:text-xl">{item.degree}</h3>
                         <p className="mt-1 text-sm text-white/72">{item.institution}</p>
                         <p className="mt-1 text-xs uppercase tracking-[0.24em] text-[var(--secondary-color)]">
                           {item.year}
@@ -75,7 +75,7 @@ export function CorporateProfessional({ record, portfolioUrl }: PortfolioTemplat
               </div>
             </aside>
 
-            <main className="px-7 py-8 sm:px-8">
+            <main className="px-5 py-6 sm:px-8 sm:py-8">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-[var(--primary-color)]">Executive Overview</p>
@@ -92,11 +92,11 @@ export function CorporateProfessional({ record, portfolioUrl }: PortfolioTemplat
                   {content.experience.map((item) => (
                     <article
                       key={`${item.company}-${item.role}`}
-                      className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5"
-                    >
+                    className="rounded-[1.2rem] border border-slate-200 bg-slate-50 p-4 sm:rounded-[1.5rem] sm:p-5"
+                  >
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                          <h3 className="font-display text-2xl font-semibold">{item.role}</h3>
+                          <h3 className="font-display text-xl font-semibold sm:text-2xl">{item.role}</h3>
                           <p className="text-sm text-slate-600">{item.company}</p>
                         </div>
                         <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-500 shadow-sm">
@@ -115,9 +115,9 @@ export function CorporateProfessional({ record, portfolioUrl }: PortfolioTemplat
                   {content.projects.map((project) => (
                     <article
                       key={`${project.title}-${project.description}`}
-                      className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm"
-                    >
-                      <h2 className="font-display text-2xl font-semibold">{project.title}</h2>
+                    className="rounded-[1.2rem] border border-slate-200 bg-white p-4 shadow-sm sm:rounded-[1.5rem] sm:p-5"
+                  >
+                      <h2 className="font-display text-xl font-semibold sm:text-2xl">{project.title}</h2>
                       <p className="mt-3 text-sm leading-7 text-slate-600">{project.description}</p>
                     </article>
                   ))}
