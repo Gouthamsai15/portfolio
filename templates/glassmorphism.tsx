@@ -1,4 +1,4 @@
-import { Github, Linkedin, Mail, Phone } from "lucide-react";
+import { Github, Globe, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { PortfolioActions } from "@/components/portfolio/portfolio-actions";
 import type { PortfolioTemplateProps } from "@/templates/types";
 
@@ -20,6 +20,15 @@ export function Glassmorphism({ record, portfolioUrl }: PortfolioTemplateProps) 
               </h1>
               <p className="mt-3 text-lg text-slate-600 sm:text-2xl">{content.role}</p>
               <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-700 sm:mt-6 sm:text-lg sm:leading-8">{content.about}</p>
+              {content.highlights.length ? (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {content.highlights.map((item) => (
+                    <span key={item} className="rounded-full border border-white/65 bg-white/70 px-3 py-2 text-xs font-medium text-slate-700">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <PortfolioActions portfolioUrl={portfolioUrl} resumeUrl={user.resume_url} />
           </div>
@@ -115,8 +124,31 @@ export function Glassmorphism({ record, portfolioUrl }: PortfolioTemplateProps) 
                     GitHub
                   </a>
                 ) : null}
+                {content.contact.website ? (
+                  <a href={content.contact.website} target="_blank" rel="noreferrer" className="flex items-center gap-3">
+                    <Globe className="h-4 w-4 text-[var(--primary-color)]" />
+                    Website
+                  </a>
+                ) : null}
+                {content.contact.location ? (
+                  <p className="flex items-center gap-3">
+                    <MapPin className="h-4 w-4 text-[var(--primary-color)]" />
+                    {content.contact.location}
+                  </p>
+                ) : null}
               </div>
             </div>
+
+            {content.additionalSections.map((section) => (
+              <div key={section.title} className="glass-panel rounded-[1.5rem] p-4 text-slate-950 sm:rounded-[2rem] sm:p-6">
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--primary-color)]">{section.title}</p>
+                <div className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
+                  {section.items.map((item) => (
+                    <p key={item}>{item}</p>
+                  ))}
+                </div>
+              </div>
+            ))}
           </aside>
         </div>
       </div>

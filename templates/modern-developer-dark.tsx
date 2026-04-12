@@ -1,4 +1,4 @@
-import { Mail, Github, Linkedin, Phone } from "lucide-react";
+import { Mail, Github, Globe, Linkedin, MapPin, Phone } from "lucide-react";
 import { PortfolioActions } from "@/components/portfolio/portfolio-actions";
 import { TypewriterRole } from "@/components/portfolio/typewriter-role";
 import type { PortfolioTemplateProps } from "@/templates/types";
@@ -24,6 +24,15 @@ export function ModernDeveloperDark({ record, portfolioUrl }: PortfolioTemplateP
               </h1>
               <TypewriterRole text={content.role} />
               <p className="max-w-2xl text-sm leading-7 text-white/72 sm:text-lg sm:leading-8">{content.about}</p>
+              {content.highlights.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {content.highlights.map((item) => (
+                    <span key={item} className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs text-white/80">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <PortfolioActions portfolioUrl={portfolioUrl} resumeUrl={user.resume_url} tone="dark" />
           </div>
@@ -127,8 +136,33 @@ export function ModernDeveloperDark({ record, portfolioUrl }: PortfolioTemplateP
                     GitHub
                   </a>
                 ) : null}
+                {content.contact.website ? (
+                  <a className="flex items-center gap-3" href={content.contact.website} target="_blank" rel="noreferrer">
+                    <Globe className="h-4 w-4 text-[var(--secondary-color)]" />
+                    Website
+                  </a>
+                ) : null}
+                {content.contact.location ? (
+                  <p className="flex items-center gap-3">
+                    <MapPin className="h-4 w-4 text-[var(--secondary-color)]" />
+                    {content.contact.location}
+                  </p>
+                ) : null}
               </div>
             </div>
+
+            {content.additionalSections.map((section) => (
+              <div key={section.title} className="dark-panel rounded-[1.5rem] p-5 sm:rounded-[2rem] sm:p-7">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-white/45 sm:text-xs sm:tracking-[0.3em]">
+                  {section.title}
+                </p>
+                <div className="mt-5 space-y-3 text-sm leading-7 text-white/72">
+                  {section.items.map((item) => (
+                    <p key={item}>{item}</p>
+                  ))}
+                </div>
+              </div>
+            ))}
           </aside>
         </div>
       </div>

@@ -20,12 +20,20 @@ create table if not exists public.portfolio_data (
   user_id uuid not null unique references public.users(id) on delete cascade,
   role text not null,
   about text not null,
+  highlights jsonb not null default '[]'::jsonb,
   skills jsonb not null default '[]'::jsonb,
   projects jsonb not null default '[]'::jsonb,
   education jsonb not null default '[]'::jsonb,
   experience jsonb not null default '[]'::jsonb,
-  contact jsonb not null default '{}'::jsonb
+  contact jsonb not null default '{}'::jsonb,
+  additional_sections jsonb not null default '[]'::jsonb
 );
+
+alter table public.portfolio_data
+add column if not exists highlights jsonb not null default '[]'::jsonb;
+
+alter table public.portfolio_data
+add column if not exists additional_sections jsonb not null default '[]'::jsonb;
 
 create index if not exists users_username_idx on public.users (username);
 create index if not exists users_created_at_idx on public.users (created_at desc);

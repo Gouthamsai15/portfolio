@@ -1,4 +1,4 @@
-import { ArrowUpRight, Github, Linkedin, Mail, Phone } from "lucide-react";
+import { ArrowUpRight, Github, Globe, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { PortfolioActions } from "@/components/portfolio/portfolio-actions";
 import type { PortfolioTemplateProps } from "@/templates/types";
 
@@ -18,6 +18,15 @@ export function CreativeDesigner({ record, portfolioUrl }: PortfolioTemplateProp
             </h1>
             <p className="mt-3 max-w-xl text-lg text-white/72 sm:mt-4 sm:text-2xl">{content.role}</p>
             <p className="mt-6 max-w-2xl text-sm leading-7 text-white/72 sm:mt-8 sm:text-lg sm:leading-8">{content.about}</p>
+            {content.highlights.length ? (
+              <div className="mt-5 flex flex-wrap gap-2">
+                {content.highlights.map((item) => (
+                  <span key={item} className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-2 text-xs text-white/80">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            ) : null}
             <div className="mt-6 sm:mt-8">
               <PortfolioActions portfolioUrl={portfolioUrl} resumeUrl={user.resume_url} tone="dark" />
             </div>
@@ -56,6 +65,18 @@ export function CreativeDesigner({ record, portfolioUrl }: PortfolioTemplateProp
                     <Github className="h-4 w-4 text-[var(--primary-color)]" />
                     GitHub
                   </a>
+                ) : null}
+                {content.contact.website ? (
+                  <a href={content.contact.website} target="_blank" rel="noreferrer" className="flex items-center gap-3">
+                    <Globe className="h-4 w-4 text-[var(--primary-color)]" />
+                    Website
+                  </a>
+                ) : null}
+                {content.contact.location ? (
+                  <p className="flex items-center gap-3">
+                    <MapPin className="h-4 w-4 text-[var(--primary-color)]" />
+                    {content.contact.location}
+                  </p>
                 ) : null}
               </div>
             </div>
@@ -139,6 +160,17 @@ export function CreativeDesigner({ record, portfolioUrl }: PortfolioTemplateProp
                 ))}
               </div>
             </div>
+
+            {content.additionalSections.map((section) => (
+              <div key={section.title} className="rounded-[1.5rem] bg-white p-4 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:rounded-[2rem] sm:p-6">
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--primary-color)]">{section.title}</p>
+                <div className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
+                  {section.items.map((item) => (
+                    <p key={item}>{item}</p>
+                  ))}
+                </div>
+              </div>
+            ))}
           </aside>
         </section>
       </div>

@@ -1,4 +1,4 @@
-import { Github, Linkedin, Mail, Phone } from "lucide-react";
+import { Github, Globe, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { PortfolioActions } from "@/components/portfolio/portfolio-actions";
 import type { PortfolioTemplateProps } from "@/templates/types";
 
@@ -15,6 +15,15 @@ export function CorporateProfessional({ record, portfolioUrl }: PortfolioTemplat
               <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight sm:text-4xl">{content.name}</h1>
               <p className="mt-3 text-base text-white/72 sm:text-lg">{content.role}</p>
               <p className="mt-6 text-sm leading-7 text-white/72">{content.about}</p>
+              {content.highlights.length ? (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {content.highlights.map((item) => (
+                    <span key={item} className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-2 text-xs text-white/80">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
 
               <div className="mt-8 space-y-6">
                 <section>
@@ -44,6 +53,18 @@ export function CorporateProfessional({ record, portfolioUrl }: PortfolioTemplat
                         GitHub
                       </a>
                     ) : null}
+                    {content.contact.website ? (
+                      <a href={content.contact.website} target="_blank" rel="noreferrer" className="flex items-center gap-3">
+                        <Globe className="h-4 w-4 text-[var(--secondary-color)]" />
+                        Website
+                      </a>
+                    ) : null}
+                    {content.contact.location ? (
+                      <p className="flex items-center gap-3">
+                        <MapPin className="h-4 w-4 text-[var(--secondary-color)]" />
+                        {content.contact.location}
+                      </p>
+                    ) : null}
                   </div>
                 </section>
 
@@ -72,6 +93,17 @@ export function CorporateProfessional({ record, portfolioUrl }: PortfolioTemplat
                     ))}
                   </div>
                 </section>
+
+                {content.additionalSections.map((section) => (
+                  <section key={section.title}>
+                    <p className="text-xs uppercase tracking-[0.28em] text-white/45">{section.title}</p>
+                    <div className="mt-4 space-y-3 text-sm leading-7 text-white/72">
+                      {section.items.map((item) => (
+                        <p key={item}>{item}</p>
+                      ))}
+                    </div>
+                  </section>
+                ))}
               </div>
             </aside>
 
@@ -92,8 +124,8 @@ export function CorporateProfessional({ record, portfolioUrl }: PortfolioTemplat
                   {content.experience.map((item) => (
                     <article
                       key={`${item.company}-${item.role}`}
-                    className="rounded-[1.2rem] border border-slate-200 bg-slate-50 p-4 sm:rounded-[1.5rem] sm:p-5"
-                  >
+                      className="rounded-[1.2rem] border border-slate-200 bg-slate-50 p-4 sm:rounded-[1.5rem] sm:p-5"
+                    >
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <h3 className="font-display text-xl font-semibold sm:text-2xl">{item.role}</h3>
@@ -115,8 +147,8 @@ export function CorporateProfessional({ record, portfolioUrl }: PortfolioTemplat
                   {content.projects.map((project) => (
                     <article
                       key={`${project.title}-${project.description}`}
-                    className="rounded-[1.2rem] border border-slate-200 bg-white p-4 shadow-sm sm:rounded-[1.5rem] sm:p-5"
-                  >
+                      className="rounded-[1.2rem] border border-slate-200 bg-white p-4 shadow-sm sm:rounded-[1.5rem] sm:p-5"
+                    >
                       <h2 className="font-display text-xl font-semibold sm:text-2xl">{project.title}</h2>
                       <p className="mt-3 text-sm leading-7 text-slate-600">{project.description}</p>
                     </article>

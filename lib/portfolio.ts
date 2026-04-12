@@ -10,6 +10,11 @@ export interface PortfolioProject {
   description: string;
 }
 
+export interface PortfolioAdditionalSection {
+  title: string;
+  items: string[];
+}
+
 export interface PortfolioEducation {
   degree: string;
   institution: string;
@@ -28,17 +33,21 @@ export interface PortfolioContact {
   phone: string;
   linkedin: string;
   github: string;
+  website: string;
+  location: string;
 }
 
 export interface PortfolioContent {
   name: string;
   role: string;
   about: string;
+  highlights: string[];
   skills: string[];
   projects: PortfolioProject[];
   education: PortfolioEducation[];
   experience: PortfolioExperience[];
   contact: PortfolioContact;
+  additionalSections: PortfolioAdditionalSection[];
 }
 
 export interface PortfolioUserRecord {
@@ -153,6 +162,34 @@ function objectArray<T extends object>(
     .filter((entry): entry is T => Boolean(entry));
 }
 
+function additionalSectionArray(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+
+      const section = entry as Record<string, unknown>;
+      const title = stringValue(section.title);
+      const items = stringArray(section.items);
+
+      if (!title || !items.length) {
+        return null;
+      }
+
+      return {
+        title,
+        items,
+      };
+    })
+    .filter((entry): entry is PortfolioAdditionalSection => Boolean(entry))
+    .slice(0, 6);
+}
+
 export function normalizeHexColor(value: string | null | undefined, fallback: string) {
   if (!value) {
     return fallback;
@@ -180,6 +217,7 @@ export function sanitizePortfolioContent(
       safePayload.about,
       `${fallbackName} brings a practical blend of execution, communication, and results-driven delivery.`,
     ),
+    highlights: stringArray(safePayload.highlights).slice(0, 6),
     skills: stringArray(safePayload.skills),
     projects: objectArray<PortfolioProject>(safePayload.projects, ["title", "description"]),
     education: objectArray<PortfolioEducation>(safePayload.education, [
@@ -198,7 +236,10 @@ export function sanitizePortfolioContent(
       phone: stringValue(safePayload.contact?.phone),
       linkedin: stringValue(safePayload.contact?.linkedin),
       github: stringValue(safePayload.contact?.github),
+      website: stringValue(safePayload.contact?.website),
+      location: stringValue(safePayload.contact?.location),
     },
+    additionalSections: additionalSectionArray(safePayload.additionalSections),
   };
 }
 

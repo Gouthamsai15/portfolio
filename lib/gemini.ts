@@ -67,6 +67,7 @@ Structure must be:
   "name": "",
   "role": "",
   "about": "",
+  "highlights": [],
   "skills": [],
   "projects": [
     {
@@ -93,11 +94,22 @@ Structure must be:
     "email": "",
     "phone": "",
     "linkedin": "",
-    "github": ""
-  }
+    "github": "",
+    "website": "",
+    "location": ""
+  },
+  "additionalSections": [
+    {
+      "title": "",
+      "items": []
+    }
+  ]
 }
 
 Make the "about" section professional, attractive, and concise.
+Preserve as much useful information from the resume as possible.
+If the resume includes certifications, achievements, awards, volunteering, publications, languages, internships, leadership, workshops, or other notable sections, place them inside "additionalSections" instead of dropping them.
+Return clean, portfolio-ready content with strong wording, but do not invent facts.
 
 Resume Text:
 <<<${resumeText}>>>`;

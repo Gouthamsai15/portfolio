@@ -1,4 +1,4 @@
-import { Github, Linkedin, Mail, Phone } from "lucide-react";
+import { Github, Globe, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { PortfolioActions } from "@/components/portfolio/portfolio-actions";
 import type { PortfolioTemplateProps } from "@/templates/types";
 
@@ -19,6 +19,15 @@ export function MinimalClean({ record, portfolioUrl }: PortfolioTemplateProps) {
               </h1>
               <p className="mt-3 text-lg text-slate-600 sm:mt-4 sm:text-2xl">{content.role}</p>
               <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-8">{content.about}</p>
+              {content.highlights.length ? (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {content.highlights.map((item) => (
+                    <span key={item} className="rounded-full bg-[var(--primary-color)]/10 px-3 py-2 text-xs font-medium text-[var(--primary-color)]">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <PortfolioActions portfolioUrl={portfolioUrl} resumeUrl={user.resume_url} />
           </div>
@@ -53,6 +62,18 @@ export function MinimalClean({ record, portfolioUrl }: PortfolioTemplateProps) {
                     GitHub
                   </a>
                 ) : null}
+                {content.contact.website ? (
+                  <a href={content.contact.website} target="_blank" rel="noreferrer" className="flex items-center gap-3">
+                    <Globe className="h-4 w-4 text-[var(--primary-color)]" />
+                    Website
+                  </a>
+                ) : null}
+                {content.contact.location ? (
+                  <p className="flex items-center gap-3">
+                    <MapPin className="h-4 w-4 text-[var(--primary-color)]" />
+                    {content.contact.location}
+                  </p>
+                ) : null}
               </div>
             </section>
 
@@ -79,6 +100,17 @@ export function MinimalClean({ record, portfolioUrl }: PortfolioTemplateProps) {
                 ))}
               </div>
             </section>
+
+            {content.additionalSections.map((section) => (
+              <section key={section.title} className="rounded-[1.4rem] border border-black/8 bg-white p-4 sm:rounded-[1.8rem] sm:p-6">
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--primary-color)]">{section.title}</p>
+                <div className="mt-5 space-y-3 text-sm leading-7 text-slate-600">
+                  {section.items.map((item) => (
+                    <p key={item}>{item}</p>
+                  ))}
+                </div>
+              </section>
+            ))}
           </aside>
 
           <section className="space-y-8">

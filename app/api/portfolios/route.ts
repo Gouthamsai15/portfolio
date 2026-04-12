@@ -124,11 +124,13 @@ export async function POST(request: Request) {
       user_id: userInsert.data.id,
       role: portfolio.role,
       about: portfolio.about,
+      highlights: portfolio.highlights,
       skills: portfolio.skills,
       projects: portfolio.projects,
       education: portfolio.education,
       experience: portfolio.experience,
       contact: portfolio.contact,
+      additional_sections: portfolio.additionalSections,
     });
 
     if (portfolioInsert.error) {

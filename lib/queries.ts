@@ -18,7 +18,7 @@ export async function getPortfolioByUsername(username: string): Promise<Portfoli
   const { data, error } = await supabase
     .from("users")
     .select(
-      "id, name, username, resume_url, template, color_primary, color_secondary, created_at, portfolio_data(role, about, skills, projects, education, experience, contact)",
+      "id, name, username, resume_url, template, color_primary, color_secondary, created_at, portfolio_data(role, about, highlights, skills, projects, education, experience, contact, additional_sections)",
     )
     .eq("username", username)
     .maybeSingle();
@@ -45,11 +45,13 @@ export async function getPortfolioByUsername(username: string): Promise<Portfoli
         name: data.name,
         role: nested?.role,
         about: nested?.about,
+        highlights: nested?.highlights,
         skills: nested?.skills,
         projects: nested?.projects,
         education: nested?.education,
         experience: nested?.experience,
         contact: nested?.contact,
+        additionalSections: nested?.additional_sections,
       },
       data.name,
     ),
