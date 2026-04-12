@@ -42,7 +42,7 @@ cp .env.example .env.local
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `GEMINI_API_KEY`
-- `GEMINI_MODEL`
+- `GEMINI_MODEL` optional, accepts any valid Gemini model string
 - `ADMIN_EMAILS`
 
 4. Run the SQL in [supabase/schema.sql](/Users/apple/Desktop/portafolio/supabase/schema.sql) inside the Supabase SQL editor.
@@ -67,5 +67,6 @@ npm run dev
 ## Notes
 
 - The generator expects a readable PDF under 8 MB.
+- If `GEMINI_MODEL` is blank, the app automatically falls back to official Gemini Flash models.
 - Storage uses a public `resumes` bucket because portfolio pages expose a resume download button.
 - The admin dashboard relies on Supabase Auth plus the optional `ADMIN_EMAILS` allowlist.

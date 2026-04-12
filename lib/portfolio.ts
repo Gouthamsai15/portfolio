@@ -214,6 +214,17 @@ export function hasSupabaseConfig() {
   );
 }
 
+export function getMissingGeneratorConfigKeys() {
+  const keys = [
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "GEMINI_API_KEY",
+  ] as const;
+
+  return keys.filter((key) => !process.env[key]);
+}
+
 export function hasGeneratorConfig() {
-  return hasSupabaseConfig() && Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_MODEL);
+  return hasSupabaseConfig() && Boolean(process.env.GEMINI_API_KEY);
 }

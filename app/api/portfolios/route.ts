@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { transformResumeToPortfolio } from "@/lib/gemini";
 import {
+  getMissingGeneratorConfigKeys,
   TEMPLATE_CATALOG,
   hasGeneratorConfig,
   normalizeHexColor,
@@ -16,10 +17,11 @@ const templateIds = new Set<string>(TEMPLATE_CATALOG.map((template) => template.
 
 export async function POST(request: Request) {
   if (!hasGeneratorConfig()) {
+    const missingKeys = getMissingGeneratorConfigKeys();
+
     return NextResponse.json(
       {
-        error:
-          "Missing generator configuration. Set Supabase and Gemini environment variables first.",
+        error: `Missing generator configuration: ${missingKeys.join(", ")}. Next.js reads .env.local or .env, not .env.example. GEMINI_MODEL is optional.`,
       },
       { status: 500 },
     );
