@@ -15,6 +15,100 @@ export const maxDuration = 60;
 
 const templateIds = new Set<string>(TEMPLATE_CATALOG.map((template) => template.id));
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message) {
+      return message;
+    }
+  }
+
+  return "Unknown error";
+}
+
+function formatGenerationError(error: unknown) {
+  const message = getErrorMessage(error);
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes("bucket") && normalized.includes("not found")) {
+    return {
+      status: 500,
+      error: "Supabase Storage bucket 'resumes' is missing. Create it or run supabase/schema.sql first.",
+    };
+  }
+
+  if (
+    normalized.includes('relation "users" does not exist') ||
+    normalized.includes('relation "portfolio_data" does not exist')
+  ) {
+    return {
+      status: 500,
+      error: "Supabase database tables are missing. Run supabase/schema.sql in your Supabase SQL editor.",
+    };
+  }
+
+  if (
+    normalized.includes("column") &&
+    (normalized.includes("highlights") || normalized.includes("additional_sections"))
+  ) {
+    return {
+      status: 500,
+      error:
+        "Your Supabase schema is outdated. Run the latest supabase/schema.sql to add the new portfolio columns.",
+    };
+  }
+
+  if (normalized.includes("row-level security") || normalized.includes("permission denied")) {
+    return {
+      status: 500,
+      error:
+        "Supabase permissions are blocking the request. Confirm SUPABASE_SERVICE_ROLE_KEY is set correctly.",
+    };
+  }
+
+  if (normalized.includes("invalid api key") || normalized.includes("api key not valid")) {
+    return {
+      status: 500,
+      error: "GEMINI_API_KEY is invalid. Update it in .env.local and restart the dev server.",
+    };
+  }
+
+  if (
+    normalized.includes("models/") ||
+    normalized.includes("model") ||
+    normalized.includes("unsupported") ||
+    normalized.includes("not found") ||
+    normalized.includes("forbidden")
+  ) {
+    return {
+      status: 500,
+      error:
+        "Gemini request failed. Check GEMINI_API_KEY and GEMINI_MODEL, or remove GEMINI_MODEL to use automatic fallbacks.",
+    };
+  }
+
+  if (error instanceof SyntaxError || normalized.includes("json")) {
+    return {
+      status: 500,
+      error:
+        "Gemini returned invalid JSON for this resume. Try again, or switch to a more stable Gemini model in .env.local.",
+    };
+  }
+
+  return {
+    status: 500,
+    error: `Portfolio generation failed: ${message}`,
+  };
+}
+
 export async function POST(request: Request) {
   if (!hasGeneratorConfig()) {
     const missingKeys = getMissingGeneratorConfigKeys();
@@ -159,11 +253,8 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json(
-      {
-        error: "Portfolio generation failed. Check Supabase storage, database tables, and Gemini settings.",
-      },
-      { status: 500 },
-    );
+    const formatted = formatGenerationError(error);
+
+    return NextResponse.json({ error: formatted.error }, { status: formatted.status });
   }
 }
