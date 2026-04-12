@@ -15,6 +15,53 @@ export const maxDuration = 60;
 
 const templateIds = new Set<string>(TEMPLATE_CATALOG.map((template) => template.id));
 
+function isMissingExtendedPortfolioColumnsError(error: unknown) {
+  const message = getErrorMessage(error).toLowerCase();
+
+  return (
+    message.includes("column") &&
+    (message.includes("highlights") || message.includes("additional_sections"))
+  );
+}
+
+async function insertPortfolioData(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  userId: string,
+  portfolio: Awaited<ReturnType<typeof transformResumeToPortfolio>>,
+) {
+  const fullInsert = await supabase.from("portfolio_data").insert({
+    user_id: userId,
+    role: portfolio.role,
+    about: portfolio.about,
+    highlights: portfolio.highlights,
+    skills: portfolio.skills,
+    projects: portfolio.projects,
+    education: portfolio.education,
+    experience: portfolio.experience,
+    contact: portfolio.contact,
+    additional_sections: portfolio.additionalSections,
+  });
+
+  if (!fullInsert.error) {
+    return fullInsert;
+  }
+
+  if (!isMissingExtendedPortfolioColumnsError(fullInsert.error)) {
+    return fullInsert;
+  }
+
+  return supabase.from("portfolio_data").insert({
+    user_id: userId,
+    role: portfolio.role,
+    about: portfolio.about,
+    skills: portfolio.skills,
+    projects: portfolio.projects,
+    education: portfolio.education,
+    experience: portfolio.experience,
+    contact: portfolio.contact,
+  });
+}
+
 function getErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) {
     return error.message;
@@ -214,18 +261,7 @@ export async function POST(request: Request) {
       throw userInsert.error ?? new Error("Unable to create user record.");
     }
 
-    const portfolioInsert = await supabase.from("portfolio_data").insert({
-      user_id: userInsert.data.id,
-      role: portfolio.role,
-      about: portfolio.about,
-      highlights: portfolio.highlights,
-      skills: portfolio.skills,
-      projects: portfolio.projects,
-      education: portfolio.education,
-      experience: portfolio.experience,
-      contact: portfolio.contact,
-      additional_sections: portfolio.additionalSections,
-    });
+    const portfolioInsert = await insertPortfolioData(supabase, userInsert.data.id, portfolio);
 
     if (portfolioInsert.error) {
       await supabase.from("users").delete().eq("id", userInsert.data.id);

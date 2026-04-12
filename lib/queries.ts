@@ -9,19 +9,40 @@ export interface AdminRow {
   created_at: string;
 }
 
+function hasMissingExtendedPortfolioColumnsError(error: { message?: string } | null) {
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return (
+    message.includes("column") &&
+    (message.includes("highlights") || message.includes("additional_sections"))
+  );
+}
+
 export async function getPortfolioByUsername(username: string): Promise<PortfolioRecord | null> {
   if (!hasSupabaseConfig()) {
     return null;
   }
 
   const supabase = createSupabaseAdminClient();
-  const { data, error } = await supabase
+  let response = await supabase
     .from("users")
     .select(
       "id, name, username, resume_url, template, color_primary, color_secondary, created_at, portfolio_data(role, about, highlights, skills, projects, education, experience, contact, additional_sections)",
     )
     .eq("username", username)
     .maybeSingle();
+
+  if (hasMissingExtendedPortfolioColumnsError(response.error)) {
+    response = await supabase
+      .from("users")
+      .select(
+        "id, name, username, resume_url, template, color_primary, color_secondary, created_at, portfolio_data(role, about, skills, projects, education, experience, contact)",
+      )
+      .eq("username", username)
+      .maybeSingle();
+  }
+
+  const { data, error } = response;
 
   if (error || !data) {
     return null;
