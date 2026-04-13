@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { LoadingSubmitButton } from "@/components/ui/loading-submit-button";
 import {
   getAdminUser,
-  hasAdminPassword,
   isAdminPasswordRequired,
 } from "@/lib/admin";
 
@@ -14,7 +13,6 @@ type LoginPageProps = {
 };
 
 export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
-  const isAdminConfigured = hasAdminPassword();
   const isPasswordRequired = isAdminPasswordRequired();
   const [user, params] = await Promise.all([getAdminUser(), searchParams]);
 
@@ -55,15 +53,8 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
           <p className="mt-3 text-sm leading-6 text-muted">
             {isPasswordRequired
               ? "Sign in with an email listed in `ADMIN_EMAILS` and the shared `ADMIN_PASSWORD` from your environment variables."
-              : "Sign in with an allowed admin email. In local development, passwordless admin access is enabled until `ADMIN_PASSWORD` is configured."}
+              : "Sign in with an allowed admin email. If no `ADMIN_PASSWORD` is configured, email-only admin access is used."}
           </p>
-
-          {!isAdminConfigured ? (
-            <p className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Admin login is not configured yet. Add `ADMIN_PASSWORD` in your environment before
-              opening the dashboard.
-            </p>
-          ) : null}
 
           <form action={loginAction} className="mt-8 space-y-5">
             <label className="space-y-2 text-sm font-medium text-slate-800">
@@ -73,7 +64,6 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
                 type="email"
                 required
                 placeholder="admin@company.com"
-                disabled={!isAdminConfigured}
                 autoComplete="email"
               />
             </label>
@@ -85,7 +75,6 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
                 type="password"
                 required={isPasswordRequired}
                 placeholder="••••••••"
-                disabled={!isAdminConfigured}
                 autoComplete="current-password"
               />
             </label>
@@ -99,7 +88,6 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
             <LoadingSubmitButton
               idleLabel="Open Dashboard"
               pendingLabel="Opening Dashboard..."
-              disabled={!isAdminConfigured}
               className="w-full"
             />
           </form>

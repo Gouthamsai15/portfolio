@@ -2,26 +2,18 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  hasAdminPassword,
-  isAdminPasswordRequired,
-  isAllowedAdmin,
-} from "@/lib/admin";
+import { isAdminPasswordRequired, isAllowedAdmin } from "@/lib/admin";
 
 function getErrorRedirect(message: string) {
   return `/admin/login?error=${encodeURIComponent(message)}`;
 }
 
 export async function loginAction(formData: FormData) {
-  if (!hasAdminPassword()) {
-    redirect(getErrorRedirect("ADMIN_PASSWORD is missing in your environment."));
-  }
-
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  if (!email || !password) {
-    redirect(getErrorRedirect("Enter both email and password."));
+  if (!email || (isAdminPasswordRequired() && !password)) {
+    redirect(getErrorRedirect("Enter your admin email and password."));
   }
 
   if (!isAllowedAdmin(email)) {

@@ -24,12 +24,8 @@ function getAdminPassword() {
   return process.env.ADMIN_PASSWORD?.trim() ?? "";
 }
 
-export function isDevelopmentAdminFallbackEnabled() {
-  return process.env.NODE_ENV !== "production" && !getAdminPassword();
-}
-
 export function hasAdminPassword() {
-  return Boolean(getAdminPassword()) || isDevelopmentAdminFallbackEnabled();
+  return Boolean(getAdminPassword());
 }
 
 export function isAdminPasswordRequired() {
@@ -37,10 +33,6 @@ export function isAdminPasswordRequired() {
 }
 
 export async function getAdminUser() {
-  if (!hasAdminPassword()) {
-    return null;
-  }
-
   const cookieStore = await cookies();
   const email = cookieStore.get("admin-session")?.value?.trim().toLowerCase();
 
