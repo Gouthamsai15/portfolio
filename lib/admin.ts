@@ -24,7 +24,15 @@ function getAdminPassword() {
   return process.env.ADMIN_PASSWORD?.trim() ?? "";
 }
 
+export function isDevelopmentAdminFallbackEnabled() {
+  return process.env.NODE_ENV !== "production" && !getAdminPassword();
+}
+
 export function hasAdminPassword() {
+  return Boolean(getAdminPassword()) || isDevelopmentAdminFallbackEnabled();
+}
+
+export function isAdminPasswordRequired() {
   return Boolean(getAdminPassword());
 }
 

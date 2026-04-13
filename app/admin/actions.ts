@@ -2,7 +2,11 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { hasAdminPassword, isAllowedAdmin } from "@/lib/admin";
+import {
+  hasAdminPassword,
+  isAdminPasswordRequired,
+  isAllowedAdmin,
+} from "@/lib/admin";
 
 function getErrorRedirect(message: string) {
   return `/admin/login?error=${encodeURIComponent(message)}`;
@@ -24,7 +28,7 @@ export async function loginAction(formData: FormData) {
     redirect(getErrorRedirect("This account is not allowed to access the admin dashboard."));
   }
 
-  if (password !== process.env.ADMIN_PASSWORD) {
+  if (isAdminPasswordRequired() && password !== process.env.ADMIN_PASSWORD) {
     redirect(getErrorRedirect("Invalid admin password."));
   }
 

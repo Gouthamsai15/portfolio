@@ -3,7 +3,11 @@ import { KeyRound, Lock, Mail } from "lucide-react";
 import { loginAction } from "@/app/admin/actions";
 import { Input } from "@/components/ui/input";
 import { LoadingSubmitButton } from "@/components/ui/loading-submit-button";
-import { getAdminUser, hasAdminPassword } from "@/lib/admin";
+import {
+  getAdminUser,
+  hasAdminPassword,
+  isAdminPasswordRequired,
+} from "@/lib/admin";
 
 type LoginPageProps = {
   searchParams: Promise<{ error?: string }>;
@@ -11,6 +15,7 @@ type LoginPageProps = {
 
 export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
   const isAdminConfigured = hasAdminPassword();
+  const isPasswordRequired = isAdminPasswordRequired();
   const [user, params] = await Promise.all([getAdminUser(), searchParams]);
 
   if (user) {
@@ -48,8 +53,9 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
         <section className="glass-panel rounded-[2rem] p-6 sm:p-8">
           <p className="font-display text-3xl font-semibold text-slate-950">Admin Login</p>
           <p className="mt-3 text-sm leading-6 text-muted">
-            Sign in with an email listed in `ADMIN_EMAILS` and the shared `ADMIN_PASSWORD`
-            from your environment variables.
+            {isPasswordRequired
+              ? "Sign in with an email listed in `ADMIN_EMAILS` and the shared `ADMIN_PASSWORD` from your environment variables."
+              : "Sign in with an allowed admin email. In local development, passwordless admin access is enabled until `ADMIN_PASSWORD` is configured."}
           </p>
 
           {!isAdminConfigured ? (
@@ -77,7 +83,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
               <Input
                 name="password"
                 type="password"
-                required
+                required={isPasswordRequired}
                 placeholder="••••••••"
                 disabled={!isAdminConfigured}
                 autoComplete="current-password"

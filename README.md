@@ -69,3 +69,4 @@ npm run dev
 - If `GEMINI_MODEL` is blank, the app automatically falls back to official Gemini Flash models.
 - Storage uses a public `resumes` bucket because portfolio pages expose a resume download button.
 - The admin dashboard uses `ADMIN_EMAILS` plus `ADMIN_PASSWORD`.
+- In local development only, the admin login falls back to email-only access when `ADMIN_PASSWORD` is missing.
