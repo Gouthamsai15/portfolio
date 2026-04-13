@@ -23,6 +23,7 @@
 
 * {
   border-color: rgba(17, 24, 39, 0.08);
+  min-width: 0;
 }
 
 html {
@@ -36,6 +37,7 @@ body {
     linear-gradient(180deg, #faf8f4 0%, #f2efe8 38%, #ebe8e1 100%);
   color: var(--foreground);
   font-family: var(--font-dm-sans), sans-serif;
+  overflow-x: hidden;
 }
 
 ::selection {
@@ -135,4 +137,22 @@ select {
   background: radial-gradient(circle, rgba(15, 118, 110, 0.15), transparent 70%);
   filter: blur(24px);
   z-index: -1;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+}
+
+a,
+p,
+span,
+h1,
+h2,
+h3,
+h4 {
+  overflow-wrap: anywhere;
 }

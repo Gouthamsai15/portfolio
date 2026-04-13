@@ -1,10 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, LoaderCircle, Sparkles } from "lucide-react";
+import { CheckCircle2, Clock3, LoaderCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { startTransition, useState } from "react";
+import { startTransition, useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { type TemplateCatalogItem, type TemplateId } from "@/lib/portfolio";
@@ -12,6 +12,13 @@ import { cn, normalizeUsername } from "@/lib/utils";
 
 const defaultPrimaryColor = "#0f766e";
 const defaultSecondaryColor = "#f97316";
+
+function formatElapsedTime(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
 
 export function PortfolioGeneratorForm({
   templates,
@@ -23,39 +30,70 @@ export function PortfolioGeneratorForm({
     templates[0]?.id ?? "modern-developer-dark",
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [error, setError] = useState("");
   const [successUrl, setSuccessUrl] = useState("");
   const [usernameHint, setUsernameHint] = useState("");
 
+  useEffect(() => {
+    if (!isSubmitting) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setElapsedSeconds((current) => current + 1);
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [isSubmitting]);
+
   async function handleSubmit(formData: FormData) {
     setError("");
     setSuccessUrl("");
+    setElapsedSeconds(0);
     setIsSubmitting(true);
 
     formData.set("template", selectedTemplate);
     formData.set("colorPrimary", defaultPrimaryColor);
     formData.set("colorSecondary", defaultSecondaryColor);
 
-    const response = await fetch("/api/portfolios", {
-      method: "POST",
-      body: formData,
-    });
+    try {
+      const response = await fetch("/api/portfolios", {
+        method: "POST",
+        body: formData,
+      });
 
-    const payload = (await response.json().catch(() => ({}))) as {
-      error?: string;
-      url?: string;
-    };
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        url?: string;
+      };
 
-    if (!response.ok || !payload.url) {
-      setError(payload.error ?? "Portfolio generation failed. Please try again.");
+      if (!response.ok || !payload.url) {
+        setError(payload.error ?? "Portfolio generation failed. Please try again.");
+        setIsSubmitting(false);
+        setElapsedSeconds(0);
+        return;
+      }
+
+      setSuccessUrl(payload.url);
+      startTransition(() => {
+        router.push(payload.url!);
+      });
+    } catch {
+      setError("Something went wrong while generating the portfolio. Please try again.");
       setIsSubmitting(false);
+      setElapsedSeconds(0);
+    }
+  }
+
+  function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (isSubmitting) {
       return;
     }
 
-    setSuccessUrl(payload.url);
-    startTransition(() => {
-      router.push(payload.url!);
-    });
+    void handleSubmit(new FormData(event.currentTarget));
   }
 
   return (
@@ -65,7 +103,7 @@ export function PortfolioGeneratorForm({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.25 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
-        action={handleSubmit}
+        onSubmit={handleFormSubmit}
         className="glass-panel space-y-5 rounded-[1.75rem] p-4 sm:space-y-6 sm:rounded-[2rem] sm:p-7"
       >
         <div className="space-y-2">
@@ -103,19 +141,19 @@ export function PortfolioGeneratorForm({
               className="cursor-pointer file:mr-4 file:rounded-full file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
             />
           </label>
-          <p className="mt-2 text-xs text-muted">
+          <p className="mt-2 break-all text-xs text-muted">
             Public portfolio route: <span className="font-semibold text-slate-900">/{usernameHint || "username"}</span>
           </p>
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="font-display text-lg font-semibold text-slate-950 sm:text-xl">Choose your template</h3>
-            <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-medium text-white">
+            <span className="w-fit rounded-full bg-slate-950 px-3 py-1 text-xs font-medium text-white">
               {templates.length} styles
             </span>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             {templates.map((template) => {
               const isActive = template.id === selectedTemplate;
 
@@ -125,7 +163,7 @@ export function PortfolioGeneratorForm({
                   type="button"
                   onClick={() => setSelectedTemplate(template.id)}
                   className={cn(
-                    "rounded-[1.5rem] border px-4 py-4 text-left sm:rounded-3xl",
+                    "rounded-[1rem] border px-3 py-3 text-left sm:rounded-3xl sm:px-4 sm:py-4",
                     isActive
                       ? "border-[var(--primary-color)] bg-slate-950 text-white shadow-xl shadow-slate-950/10"
                       : "border-black/8 bg-white/72 text-slate-900 hover:border-black/18",
@@ -133,8 +171,8 @@ export function PortfolioGeneratorForm({
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-display text-base font-semibold sm:text-lg">{template.name}</p>
-                      <p className={cn("mt-1 text-sm leading-6", isActive ? "text-white/72" : "text-muted")}>
+                      <p className="font-display text-sm font-semibold sm:text-lg">{template.name}</p>
+                      <p className={cn("mt-1 text-xs leading-5 sm:text-sm sm:leading-6", isActive ? "text-white/72" : "text-muted")}>
                         {template.description}
                       </p>
                     </div>
@@ -174,11 +212,49 @@ export function PortfolioGeneratorForm({
           ) : null}
         </AnimatePresence>
 
+        <AnimatePresence>
+          {isSubmitting ? (
+            <motion.div
+              key="loading-state"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="rounded-[1.5rem] border border-[var(--primary-color)]/20 bg-[var(--primary-color)]/6 px-4 py-4"
+              aria-live="polite"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-slate-900">Generating your portfolio</p>
+                  <p className="text-xs leading-6 text-muted sm:text-sm">
+                    We are processing your resume and building your portfolio page now.
+                  </p>
+                </div>
+                <div className="flex w-fit items-center gap-2 rounded-full bg-white/80 px-3 py-2 text-xs font-semibold text-slate-900 shadow-sm">
+                  <Clock3 className="h-4 w-4 text-[var(--primary-color)]" />
+                  {formatElapsedTime(elapsedSeconds)}
+                </div>
+              </div>
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/80">
+                <motion.div
+                  className="h-full rounded-full bg-[var(--primary-color)]"
+                  initial={{ x: "-100%" }}
+                  animate={{ x: ["-100%", "0%", "100%"] }}
+                  transition={{ duration: 1.4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+                  style={{ width: "40%" }}
+                />
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
         <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? (
             <>
               <LoaderCircle className="h-4 w-4 animate-spin" />
-              Generating Portfolio...
+              <span>Generating Portfolio</span>
+              <span className="rounded-full bg-white/12 px-2 py-1 text-xs font-medium text-white/85">
+                {formatElapsedTime(elapsedSeconds)}
+              </span>
             </>
           ) : (
             <>

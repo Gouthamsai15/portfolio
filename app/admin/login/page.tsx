@@ -21,16 +21,16 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-6 py-10 sm:px-8">
+    <main className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-4 py-6 sm:px-8 sm:py-10">
       <div className="grid w-full gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-        <section className="space-y-6">
+        <section className="hidden space-y-6 lg:block">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--primary-color)]">
             Super Admin Access
           </p>
-          <h1 className="font-display text-5xl font-semibold tracking-tight text-slate-950 sm:text-6xl">
+          <h1 className="font-display text-4xl font-semibold tracking-tight text-slate-950 sm:text-6xl">
             Review, search, and manage every generated portfolio.
           </h1>
-          <p className="max-w-xl text-lg leading-8 text-muted">
+          <p className="max-w-xl text-base leading-7 text-muted sm:text-lg sm:leading-8">
             The admin area uses a simple superadmin login and is designed for fast operational
             control across all published portfolio routes.
           </p>
@@ -48,7 +48,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
           </div>
         </section>
 
-        <section className="glass-panel rounded-[2rem] p-6 sm:p-8">
+        <section className="glass-panel rounded-[2rem] p-5 sm:p-8">
           <p className="font-display text-3xl font-semibold text-slate-950">Admin Login</p>
           <p className="mt-3 text-sm leading-6 text-muted">
             {isPasswordRequired
@@ -56,7 +56,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
               : "Sign in with an allowed admin email. If no `ADMIN_PASSWORD` is configured, email-only admin access is used."}
           </p>
 
-          <form action={loginAction} className="mt-8 space-y-5">
+          <form action={loginAction} className="mt-6 space-y-4 sm:mt-8 sm:space-y-5">
             <label className="space-y-2 text-sm font-medium text-slate-800">
               Email
               <Input
@@ -88,7 +88,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
             <LoadingSubmitButton
               idleLabel="Open Dashboard"
               pendingLabel="Opening Dashboard..."
-              className="w-full"
+              className="mt-2 w-full sm:mt-3"
             />
           </form>
         </section>
