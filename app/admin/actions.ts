@@ -1,16 +1,16 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { isAllowedAdmin } from "@/lib/admin";
-import { createSupabaseServerComponentClient, hasSupabaseClientConfig } from "@/lib/supabase";
+import { hasAdminPassword, isAllowedAdmin } from "@/lib/admin";
 
 function getErrorRedirect(message: string) {
   return `/admin/login?error=${encodeURIComponent(message)}`;
 }
 
 export async function loginAction(formData: FormData) {
-  if (!hasSupabaseClientConfig()) {
-    redirect(getErrorRedirect("Supabase Auth is not configured yet."));
+  if (!hasAdminPassword()) {
+    redirect(getErrorRedirect("ADMIN_PASSWORD is missing in your environment."));
   }
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -20,27 +20,30 @@ export async function loginAction(formData: FormData) {
     redirect(getErrorRedirect("Enter both email and password."));
   }
 
-  const supabase = await createSupabaseServerComponentClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    redirect(getErrorRedirect(error.message));
-  }
-
   if (!isAllowedAdmin(email)) {
-    await supabase.auth.signOut();
     redirect(getErrorRedirect("This account is not allowed to access the admin dashboard."));
   }
+
+  if (password !== process.env.ADMIN_PASSWORD) {
+    redirect(getErrorRedirect("Invalid admin password."));
+  }
+
+  const cookieStore = await cookies();
+  cookieStore.set({
+    name: "admin-session",
+    value: email,
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
 
   redirect("/admin");
 }
 
 export async function logoutAction() {
-  if (!hasSupabaseClientConfig()) {
-    redirect("/admin/login");
-  }
-
-  const supabase = await createSupabaseServerComponentClient();
-  await supabase.auth.signOut();
+  const cookieStore = await cookies();
+  cookieStore.delete("admin-session");
   redirect("/admin/login");
 }

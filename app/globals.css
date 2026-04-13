@@ -93,6 +93,25 @@ select {
   mask-image: linear-gradient(180deg, black, transparent);
 }
 
+.template-noise {
+  position: relative;
+  isolation: isolate;
+}
+
+.template-noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.3;
+  background-image:
+    linear-gradient(transparent 0, rgba(255, 255, 255, 0.42) 50%, transparent 100%),
+    radial-gradient(rgba(17, 24, 39, 0.08) 0.65px, transparent 0.8px);
+  background-size: 100% 100%, 12px 12px;
+  mask-image: linear-gradient(180deg, black, transparent 85%);
+}
+
 .section-anchor {
   scroll-margin-top: 110px;
 }

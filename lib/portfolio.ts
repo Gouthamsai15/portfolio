@@ -1,9 +1,11 @@
-export type TemplateId =
+export type BuiltInTemplateId =
   | "modern-developer-dark"
   | "minimal-clean"
   | "glassmorphism"
   | "creative-designer"
   | "corporate-professional";
+
+export type TemplateId = BuiltInTemplateId | `custom:${string}`;
 
 export interface PortfolioProject {
   title: string;
@@ -48,6 +50,7 @@ export interface PortfolioContent {
   experience: PortfolioExperience[];
   contact: PortfolioContact;
   additionalSections: PortfolioAdditionalSection[];
+  renderedHtml: string;
 }
 
 export interface PortfolioUserRecord {
@@ -64,6 +67,7 @@ export interface PortfolioUserRecord {
 export interface PortfolioRecord {
   user: PortfolioUserRecord;
   content: PortfolioContent;
+  customTemplate: CustomTemplateRecord | null;
 }
 
 export interface TemplateCatalogItem {
@@ -72,6 +76,20 @@ export interface TemplateCatalogItem {
   description: string;
   persona: string;
   highlights: string[];
+  source?: "built-in" | "custom";
+  slug?: string;
+}
+
+export interface CustomTemplateRecord {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  persona: string;
+  highlights: string[];
+  html: string;
+  is_active: boolean;
+  created_at: string;
 }
 
 export const TEMPLATE_CATALOG: TemplateCatalogItem[] = [
@@ -81,6 +99,7 @@ export const TEMPLATE_CATALOG: TemplateCatalogItem[] = [
     description: "Neon-led, motion-rich layout for engineers and technical creators.",
     persona: "Technical",
     highlights: ["typing hero", "dark canvas", "glow panels"],
+    source: "built-in",
   },
   {
     id: "minimal-clean",
@@ -88,6 +107,7 @@ export const TEMPLATE_CATALOG: TemplateCatalogItem[] = [
     description: "Quiet luxury with refined spacing and editorial typography.",
     persona: "Minimal",
     highlights: ["soft contrast", "clean grid", "editorial rhythm"],
+    source: "built-in",
   },
   {
     id: "glassmorphism",
@@ -95,6 +115,7 @@ export const TEMPLATE_CATALOG: TemplateCatalogItem[] = [
     description: "Gradient atmosphere with frosted panels and luminous depth.",
     persona: "Futuristic",
     highlights: ["blur cards", "floating layers", "light bloom"],
+    source: "built-in",
   },
   {
     id: "creative-designer",
@@ -102,6 +123,7 @@ export const TEMPLATE_CATALOG: TemplateCatalogItem[] = [
     description: "Expressive, bold composition for visually driven personal brands.",
     persona: "Creative",
     highlights: ["oversized type", "asymmetric layout", "animated accents"],
+    source: "built-in",
   },
   {
     id: "corporate-professional",
@@ -109,8 +131,11 @@ export const TEMPLATE_CATALOG: TemplateCatalogItem[] = [
     description: "Polished resume-style presentation for consultants and leaders.",
     persona: "Formal",
     highlights: ["two-column layout", "structured timeline", "executive tone"],
+    source: "built-in",
   },
 ];
+
+const builtInTemplateIds = new Set<TemplateId>(TEMPLATE_CATALOG.map((template) => template.id));
 
 export const THEME_PRESETS = [
   { name: "Ocean Signal", primary: "#0f766e", secondary: "#f97316" },
@@ -204,6 +229,28 @@ export function normalizeHexColor(value: string | null | undefined, fallback: st
   return fallback;
 }
 
+export function isBuiltInTemplateId(value: string): value is BuiltInTemplateId {
+  return builtInTemplateIds.has(value as TemplateId);
+}
+
+export function isCustomTemplateId(value: string): value is `custom:${string}` {
+  return value.startsWith("custom:");
+}
+
+export function getCustomTemplateId(slug: string) {
+  return `custom:${slug}` as const;
+}
+
+export function normalizeTemplateSlug(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\.html?$/i, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+}
+
 export function sanitizePortfolioContent(
   payload: Partial<PortfolioContent> | null | undefined,
   fallbackName: string,
@@ -240,6 +287,7 @@ export function sanitizePortfolioContent(
       location: stringValue(safePayload.contact?.location),
     },
     additionalSections: additionalSectionArray(safePayload.additionalSections),
+    renderedHtml: stringValue((safePayload as { renderedHtml?: unknown }).renderedHtml),
   };
 }
 
@@ -250,7 +298,6 @@ export function getThemeDefaults() {
 export function hasSupabaseConfig() {
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
       process.env.SUPABASE_SERVICE_ROLE_KEY,
   );
 }
@@ -258,7 +305,6 @@ export function hasSupabaseConfig() {
 export function getMissingGeneratorConfigKeys() {
   const keys = [
     "NEXT_PUBLIC_SUPABASE_URL",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "SUPABASE_SERVICE_ROLE_KEY",
     "GEMINI_API_KEY",
   ] as const;

@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
   await requireAdminUser();
-  const { total, rows } = await getAdminDashboardData();
+  const { total, rows, templates } = await getAdminDashboardData();
 
-  return <AdminDashboard initialRows={rows} total={total} />;
+  return <AdminDashboard initialRows={rows} total={total} initialTemplates={templates} />;
 }

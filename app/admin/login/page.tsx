@@ -1,17 +1,16 @@
 import { redirect } from "next/navigation";
 import { KeyRound, Lock, Mail } from "lucide-react";
 import { loginAction } from "@/app/admin/actions";
-import { buttonStyles } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getAdminUser } from "@/lib/admin";
-import { hasSupabaseClientConfig } from "@/lib/supabase";
+import { LoadingSubmitButton } from "@/components/ui/loading-submit-button";
+import { getAdminUser, hasAdminPassword } from "@/lib/admin";
 
 type LoginPageProps = {
   searchParams: Promise<{ error?: string }>;
 };
 
 export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
-  const isSupabaseConfigured = hasSupabaseClientConfig();
+  const isAdminConfigured = hasAdminPassword();
   const [user, params] = await Promise.all([getAdminUser(), searchParams]);
 
   if (user) {
@@ -29,7 +28,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
             Review, search, and manage every generated portfolio.
           </h1>
           <p className="max-w-xl text-lg leading-8 text-muted">
-            The admin area is protected with Supabase Auth and designed for fast operational
+            The admin area uses a simple superadmin login and is designed for fast operational
             control across all published portfolio routes.
           </p>
           <div className="grid gap-4 sm:grid-cols-3">
@@ -49,14 +48,14 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
         <section className="glass-panel rounded-[2rem] p-6 sm:p-8">
           <p className="font-display text-3xl font-semibold text-slate-950">Admin Login</p>
           <p className="mt-3 text-sm leading-6 text-muted">
-            Use a Supabase Auth user account. Restrict access further with the `ADMIN_EMAILS`
-            allowlist in your environment variables.
+            Sign in with an email listed in `ADMIN_EMAILS` and the shared `ADMIN_PASSWORD`
+            from your environment variables.
           </p>
 
-          {!isSupabaseConfigured ? (
+          {!isAdminConfigured ? (
             <p className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Supabase Auth is not configured yet. Add `NEXT_PUBLIC_SUPABASE_URL` and
-              `NEXT_PUBLIC_SUPABASE_ANON_KEY` in your environment before using admin login.
+              Admin login is not configured yet. Add `ADMIN_PASSWORD` in your environment before
+              opening the dashboard.
             </p>
           ) : null}
 
@@ -68,7 +67,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
                 type="email"
                 required
                 placeholder="admin@company.com"
-                disabled={!isSupabaseConfigured}
+                disabled={!isAdminConfigured}
                 autoComplete="email"
               />
             </label>
@@ -80,7 +79,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
                 type="password"
                 required
                 placeholder="••••••••"
-                disabled={!isSupabaseConfigured}
+                disabled={!isAdminConfigured}
                 autoComplete="current-password"
               />
             </label>
@@ -91,13 +90,12 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
               </p>
             ) : null}
 
-            <button
-              type="submit"
-              disabled={!isSupabaseConfigured}
-              className={buttonStyles({ size: "lg" }) + " w-full"}
-            >
-              Open Dashboard
-            </button>
+            <LoadingSubmitButton
+              idleLabel="Open Dashboard"
+              pendingLabel="Opening Dashboard..."
+              disabled={!isAdminConfigured}
+              className="w-full"
+            />
           </form>
         </section>
       </div>

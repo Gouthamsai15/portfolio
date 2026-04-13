@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -12,17 +12,24 @@ export function CopyLinkButton({
   tone?: "light" | "dark";
 }) {
   const [copied, setCopied] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
+    try {
+      setIsCopying(true);
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } finally {
+      setIsCopying(false);
+    }
   }
 
   return (
     <button
       type="button"
       onClick={handleCopy}
+      disabled={isCopying}
       className={cn(
         "inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-xs font-semibold sm:w-auto sm:text-sm",
         tone === "dark"
@@ -30,8 +37,17 @@ export function CopyLinkButton({
           : "border border-black/10 bg-white/80 text-slate-900 hover:bg-white",
       )}
     >
-      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-      {copied ? "Copied" : "Copy Link"}
+      {isCopying ? (
+        <>
+          <LoaderCircle className="h-4 w-4 animate-spin" />
+          Copying...
+        </>
+      ) : (
+        <>
+          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          {copied ? "Copied" : "Copy Link"}
+        </>
+      )}
     </button>
   );
 }

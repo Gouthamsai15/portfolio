@@ -3,10 +3,14 @@ import { ArrowRight, BadgeCheck } from "lucide-react";
 import { PortfolioGeneratorForm } from "@/components/generator/portfolio-generator-form";
 import { buttonStyles } from "@/components/ui/button";
 import { hasGeneratorConfig } from "@/lib/portfolio";
+import { getGeneratorTemplateCatalog } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
   const isConfigured = hasGeneratorConfig();
+  const templates = await getGeneratorTemplateCatalog();
 
   return (
     <main className="site-shell flex-1">
@@ -82,7 +86,7 @@ export default function Home() {
               Fill the form, upload the PDF, and generate the portfolio.
             </p>
           </div>
-          <PortfolioGeneratorForm />
+          <PortfolioGeneratorForm templates={templates} />
         </section>
       </div>
     </main>

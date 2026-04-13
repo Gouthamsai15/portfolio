@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { logoutAction } from "@/app/admin/actions";
 import { buttonStyles } from "@/components/ui/button";
+import { LoadingSubmitButton } from "@/components/ui/loading-submit-button";
 import { requireAdminUser } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
@@ -31,9 +32,11 @@ export default async function AdminDashboardLayout({
             Back to Generator
           </Link>
           <form action={logoutAction}>
-            <button type="submit" className={buttonStyles()}>
-              Sign Out
-            </button>
+            <LoadingSubmitButton
+              idleLabel="Sign Out"
+              pendingLabel="Signing Out..."
+              size="md"
+            />
           </form>
         </div>
       </header>

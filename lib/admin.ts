@@ -1,5 +1,5 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createSupabaseServerComponentClient, hasSupabaseClientConfig } from "@/lib/supabase";
 
 function getAdminAllowList() {
   return (process.env.ADMIN_EMAILS ?? "")
@@ -20,21 +20,27 @@ function isAllowedAdmin(email: string | null | undefined) {
 
 export { isAllowedAdmin };
 
+function getAdminPassword() {
+  return process.env.ADMIN_PASSWORD?.trim() ?? "";
+}
+
+export function hasAdminPassword() {
+  return Boolean(getAdminPassword());
+}
+
 export async function getAdminUser() {
-  if (!hasSupabaseClientConfig()) {
+  if (!hasAdminPassword()) {
     return null;
   }
 
-  const supabase = await createSupabaseServerComponentClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const email = cookieStore.get("admin-session")?.value?.trim().toLowerCase();
 
-  if (!user || !isAllowedAdmin(user.email)) {
+  if (!email || !isAllowedAdmin(email)) {
     return null;
   }
 
-  return user;
+  return { email };
 }
 
 export async function requireAdminUser() {

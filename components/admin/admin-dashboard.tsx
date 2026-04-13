@@ -2,32 +2,53 @@
 
 import Link from "next/link";
 import { startTransition, useDeferredValue, useState } from "react";
-import { ExternalLink, LoaderCircle, Search, Trash2 } from "lucide-react";
+import { ExternalLink, FileCode2, LoaderCircle, Search, Trash2, Upload } from "lucide-react";
+import type { AdminRow } from "@/lib/queries";
+import {
+  TEMPLATE_CATALOG,
+  type CustomTemplateRecord,
+} from "@/lib/portfolio";
+import { formatDate } from "@/lib/utils";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { AdminRow } from "@/lib/queries";
-import { TEMPLATE_CATALOG } from "@/lib/portfolio";
-import { formatDate } from "@/lib/utils";
+
+function getTemplateLabel(templateId: string, templates: CustomTemplateRecord[]) {
+  const builtIn = TEMPLATE_CATALOG.find((entry) => entry.id === templateId);
+
+  if (builtIn) {
+    return builtIn.name;
+  }
+
+  const custom = templates.find((entry) => `custom:${entry.slug}` === templateId);
+  return custom?.name ?? templateId;
+}
 
 export function AdminDashboard({
   initialRows,
   total,
+  initialTemplates,
 }: {
   initialRows: AdminRow[];
   total: number;
+  initialTemplates: CustomTemplateRecord[];
 }) {
   const [rows, setRows] = useState(initialRows);
+  const [templates, setTemplates] = useState(initialTemplates);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
+  const [uploadError, setUploadError] = useState("");
+  const [uploadSuccess, setUploadSuccess] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
+  const [isUploadingTemplate, setIsUploadingTemplate] = useState(false);
   const deferredQuery = useDeferredValue(query);
 
   const filteredRows = rows.filter((row) => {
-    const haystack = `${row.name} ${row.username} ${row.template}`.toLowerCase();
+    const haystack = `${row.name} ${row.username} ${getTemplateLabel(row.template, templates)}`.toLowerCase();
     return haystack.includes(deferredQuery.trim().toLowerCase());
   });
 
-  async function handleDelete(id: string, username: string) {
+  async function handleDeletePortfolio(id: string, username: string) {
     const confirmed = window.confirm(`Delete ${username}'s portfolio? This removes the live route.`);
 
     if (!confirmed) {
@@ -55,6 +76,63 @@ export function AdminDashboard({
     setDeletingId(null);
   }
 
+  async function handleUploadTemplate(formData: FormData) {
+    setUploadError("");
+    setUploadSuccess("");
+    setIsUploadingTemplate(true);
+
+    const response = await fetch("/api/admin/templates", {
+      method: "POST",
+      body: formData,
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      template?: CustomTemplateRecord;
+    };
+
+    if (!response.ok || !payload.template) {
+      setUploadError(payload.error ?? "Unable to upload this HTML template.");
+      setIsUploadingTemplate(false);
+      return;
+    }
+
+    startTransition(() => {
+      setTemplates((current) => [payload.template!, ...current]);
+    });
+    setUploadSuccess(`Template "${payload.template.name}" is now available in Choose your template.`);
+    setIsUploadingTemplate(false);
+  }
+
+  async function handleDeleteTemplate(template: CustomTemplateRecord) {
+    const confirmed = window.confirm(`Delete HTML template "${template.name}"?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingTemplateId(template.id);
+    setUploadError("");
+    setUploadSuccess("");
+
+    const response = await fetch(`/api/admin/templates/${template.id}`, {
+      method: "DELETE",
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+    if (!response.ok) {
+      setUploadError(payload.error ?? "Unable to delete this HTML template.");
+      setDeletingTemplateId(null);
+      return;
+    }
+
+    startTransition(() => {
+      setTemplates((current) => current.filter((entry) => entry.id !== template.id));
+    });
+    setDeletingTemplateId(null);
+  }
+
   return (
     <div className="space-y-8">
       <div className="grid gap-4 sm:grid-cols-3">
@@ -68,16 +146,128 @@ export function AdminDashboard({
           <p className="mt-3 font-display text-4xl font-semibold text-slate-950">
             {new Set(rows.map((row) => row.template)).size}
           </p>
-          <p className="mt-2 text-sm text-muted">Distinct premium templates currently in use.</p>
+          <p className="mt-2 text-sm text-muted">Distinct built-in and uploaded templates currently in use.</p>
         </article>
         <article className="glass-panel rounded-[1.75rem] p-5">
-          <p className="text-xs uppercase tracking-[0.3em] text-[var(--primary-color)]">Latest</p>
-          <p className="mt-3 font-display text-3xl font-semibold text-slate-950">
-            {rows[0] ? formatDate(rows[0].created_at) : "No entries"}
-          </p>
-          <p className="mt-2 text-sm text-muted">Most recent portfolio creation date.</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[var(--primary-color)]">HTML Library</p>
+          <p className="mt-3 font-display text-4xl font-semibold text-slate-950">{templates.length}</p>
+          <p className="mt-2 text-sm text-muted">Custom HTML templates available in the generator.</p>
         </article>
       </div>
+
+      <section className="glass-panel rounded-[2rem] p-6 sm:p-7">
+        <div>
+          <div>
+            <p className="font-display text-3xl font-semibold text-slate-950">Upload HTML Templates</p>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Upload any portfolio HTML file. AI will clean sample data from it and convert it
+              into a resume-driven template automatically.
+            </p>
+
+            <form action={handleUploadTemplate} className="mt-6 space-y-4 sm:max-w-xl">
+              <label className="space-y-2 text-sm font-medium text-slate-800">
+                Template Name
+                <Input name="name" required placeholder="Warm Editorial Portfolio" />
+              </label>
+
+              <label className="space-y-2 text-sm font-medium text-slate-800">
+                HTML File
+                <Input
+                  name="htmlFile"
+                  type="file"
+                  accept=".html,text/html"
+                  required
+                  className="cursor-pointer file:mr-4 file:rounded-full file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+                />
+              </label>
+
+              {uploadError ? (
+                <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  {uploadError}
+                </p>
+              ) : null}
+
+              {uploadSuccess ? (
+                <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  {uploadSuccess}
+                </p>
+              ) : null}
+
+              <Button type="submit" size="lg" disabled={isUploadingTemplate}>
+                {isUploadingTemplate ? (
+                  <>
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    Uploading Template...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4" />
+                    Upload HTML Template
+                  </>
+                )}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section className="glass-panel rounded-[2rem] p-6 sm:p-7">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="font-display text-3xl font-semibold text-slate-950">HTML Template Library</p>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              These custom templates are shown to customers under Choose your template.
+            </p>
+          </div>
+          <div className="rounded-full border border-black/8 bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-600">
+            {templates.length} uploaded
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {templates.length ? (
+            templates.map((template) => (
+              <article key={template.id} className="rounded-[1.5rem] border border-black/8 bg-white/80 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-display text-xl font-semibold text-slate-950">{template.name}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">custom:{template.slug}</p>
+                  </div>
+                  <FileCode2 className="h-5 w-5 text-[var(--primary-color)]" />
+                </div>
+                <p className="mt-3 text-sm leading-6 text-muted">{template.description}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {template.highlights.map((item) => (
+                    <span key={item} className="rounded-full border border-black/8 bg-slate-50 px-3 py-1 text-xs text-slate-600">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-5 flex items-center justify-between gap-3">
+                  <p className="text-xs text-slate-400">Added {formatDate(template.created_at)}</p>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    disabled={deletingTemplateId === template.id}
+                    onClick={() => handleDeleteTemplate(template)}
+                  >
+                    {deletingTemplateId === template.id ? (
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    Delete
+                  </Button>
+                </div>
+              </article>
+            ))
+          ) : (
+            <div className="rounded-[1.5rem] border border-dashed border-black/10 bg-white/60 px-5 py-12 text-center text-sm text-muted md:col-span-2">
+              No custom HTML templates uploaded yet.
+            </div>
+          )}
+        </div>
+      </section>
 
       <section className="glass-panel rounded-[2rem] p-6 sm:p-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -116,7 +306,7 @@ export function AdminDashboard({
           <div className="divide-y divide-black/6">
             {filteredRows.length ? (
               filteredRows.map((row) => {
-                const template = TEMPLATE_CATALOG.find((entry) => entry.id === row.template);
+                const templateLabel = getTemplateLabel(row.template, templates);
 
                 return (
                   <div
@@ -126,11 +316,11 @@ export function AdminDashboard({
                     <div>
                       <p className="font-medium text-slate-900">{row.name}</p>
                       <p className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400 md:hidden">
-                        {template?.name ?? row.template}
+                        {templateLabel}
                       </p>
                     </div>
                     <p className="text-sm text-slate-600">/{row.username}</p>
-                    <p className="hidden text-sm text-slate-600 md:block">{template?.name ?? row.template}</p>
+                    <p className="hidden text-sm text-slate-600 md:block">{templateLabel}</p>
                     <p className="text-sm text-slate-600">{formatDate(row.created_at)}</p>
                     <div className="flex flex-wrap gap-3">
                       <Link
@@ -145,7 +335,7 @@ export function AdminDashboard({
                         variant="danger"
                         size="sm"
                         disabled={deletingId === row.id}
-                        onClick={() => handleDelete(row.id, row.username)}
+                        onClick={() => handleDeletePortfolio(row.id, row.username)}
                       >
                         {deletingId === row.id ? (
                           <LoaderCircle className="h-4 w-4 animate-spin" />

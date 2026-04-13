@@ -7,16 +7,21 @@ import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { THEME_PRESETS, TEMPLATE_CATALOG, getThemeDefaults, type TemplateId } from "@/lib/portfolio";
+import { type TemplateCatalogItem, type TemplateId } from "@/lib/portfolio";
 import { cn, normalizeUsername } from "@/lib/utils";
 
-const defaultTheme = getThemeDefaults();
+const defaultPrimaryColor = "#0f766e";
+const defaultSecondaryColor = "#f97316";
 
-export function PortfolioGeneratorForm() {
+export function PortfolioGeneratorForm({
+  templates,
+}: {
+  templates: TemplateCatalogItem[];
+}) {
   const router = useRouter();
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("modern-developer-dark");
-  const [primaryColor, setPrimaryColor] = useState(defaultTheme.primary);
-  const [secondaryColor, setSecondaryColor] = useState(defaultTheme.secondary);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>(
+    templates[0]?.id ?? "modern-developer-dark",
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [successUrl, setSuccessUrl] = useState("");
@@ -28,8 +33,8 @@ export function PortfolioGeneratorForm() {
     setIsSubmitting(true);
 
     formData.set("template", selectedTemplate);
-    formData.set("colorPrimary", primaryColor);
-    formData.set("colorSecondary", secondaryColor);
+    formData.set("colorPrimary", defaultPrimaryColor);
+    formData.set("colorSecondary", defaultSecondaryColor);
 
     const response = await fetch("/api/portfolios", {
       method: "POST",
@@ -107,11 +112,11 @@ export function PortfolioGeneratorForm() {
           <div className="flex items-center justify-between">
             <h3 className="font-display text-lg font-semibold text-slate-950 sm:text-xl">Choose your template</h3>
             <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-medium text-white">
-              5 styles
+              {templates.length} styles
             </span>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {TEMPLATE_CATALOG.map((template) => {
+            {templates.map((template) => {
               const isActive = template.id === selectedTemplate;
 
               return (
@@ -120,72 +125,25 @@ export function PortfolioGeneratorForm() {
                   type="button"
                   onClick={() => setSelectedTemplate(template.id)}
                   className={cn(
-                    "rounded-[1.5rem] border px-4 py-3 text-left sm:rounded-3xl sm:py-4",
+                    "rounded-[1.5rem] border px-4 py-4 text-left sm:rounded-3xl",
                     isActive
-                      ? "border-[var(--primary-color)] bg-slate-950 text-white shadow-xl shadow-slate-950/15"
-                      : "border-black/8 bg-white/72 text-slate-900 hover:border-black/20",
+                      ? "border-[var(--primary-color)] bg-slate-950 text-white shadow-xl shadow-slate-950/10"
+                      : "border-black/8 bg-white/72 text-slate-900 hover:border-black/18",
                   )}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
                       <p className="font-display text-base font-semibold sm:text-lg">{template.name}</p>
-                      <p className={cn("mt-1 text-xs sm:text-sm", isActive ? "text-white/75" : "text-muted")}>{template.persona}</p>
-                      </div>
-                    {isActive && <CheckCircle2 className="mt-1 h-5 w-5 text-[var(--secondary-color)]" />}
+                      <p className={cn("mt-1 text-sm leading-6", isActive ? "text-white/72" : "text-muted")}>
+                        {template.description}
+                      </p>
+                    </div>
+                    {isActive ? <CheckCircle2 className="mt-1 h-5 w-5 text-[var(--secondary-color)]" /> : null}
                   </div>
                 </button>
               );
             })}
           </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-2 text-sm font-medium text-slate-800">
-            Primary Color
-            <div className="flex items-center gap-3 rounded-[1.5rem] border border-black/8 bg-white/72 px-4 py-3 sm:rounded-3xl">
-              <input
-                type="color"
-                name="colorPrimary"
-                value={primaryColor}
-                onChange={(event) => setPrimaryColor(event.target.value)}
-                className="h-10 w-12 cursor-pointer rounded-xl border-0 bg-transparent"
-              />
-              <span className="font-mono text-sm uppercase text-slate-600">{primaryColor}</span>
-            </div>
-          </label>
-          <label className="space-y-2 text-sm font-medium text-slate-800">
-            Secondary Color
-            <div className="flex items-center gap-3 rounded-[1.5rem] border border-black/8 bg-white/72 px-4 py-3 sm:rounded-3xl">
-              <input
-                type="color"
-                name="colorSecondary"
-                value={secondaryColor}
-                onChange={(event) => setSecondaryColor(event.target.value)}
-                className="h-10 w-12 cursor-pointer rounded-xl border-0 bg-transparent"
-              />
-              <span className="font-mono text-sm uppercase text-slate-600">{secondaryColor}</span>
-            </div>
-          </label>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {THEME_PRESETS.map((theme) => (
-            <button
-              key={theme.name}
-              type="button"
-              onClick={() => {
-                setPrimaryColor(theme.primary);
-                setSecondaryColor(theme.secondary);
-              }}
-              className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-white/72 px-3 py-2 text-xs font-medium text-slate-700"
-            >
-              <span
-                className="h-3 w-3 rounded-full"
-                style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}
-              />
-              {theme.name}
-            </button>
-          ))}
         </div>
 
         <AnimatePresence mode="wait">

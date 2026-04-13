@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { transformResumeToPortfolio } from "@/lib/gemini";
+import { mergePortfolioIntoUploadedHtml, transformResumeToPortfolio } from "@/lib/gemini";
 import {
   getMissingGeneratorConfigKeys,
-  TEMPLATE_CATALOG,
   hasGeneratorConfig,
+  isBuiltInTemplateId,
+  isCustomTemplateId,
   normalizeHexColor,
   type TemplateId,
 } from "@/lib/portfolio";
@@ -13,14 +14,21 @@ import { normalizeUsername } from "@/lib/utils";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const templateIds = new Set<string>(TEMPLATE_CATALOG.map((template) => template.id));
+function isMissingPortfolioTemplatesTableError(error: unknown) {
+  const message = getErrorMessage(error).toLowerCase();
+
+  return (
+    message.includes('relation "public.portfolio_templates" does not exist') ||
+    message.includes("could not find the table 'public.portfolio_templates' in the schema cache")
+  );
+}
 
 function isMissingExtendedPortfolioColumnsError(error: unknown) {
   const message = getErrorMessage(error).toLowerCase();
 
   return (
     message.includes("column") &&
-    (message.includes("highlights") || message.includes("additional_sections"))
+    (message.includes("highlights") || message.includes("additional_sections") || message.includes("rendered_html"))
   );
 }
 
@@ -28,6 +36,7 @@ async function insertPortfolioData(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
   userId: string,
   portfolio: Awaited<ReturnType<typeof transformResumeToPortfolio>>,
+  renderedHtml: string,
 ) {
   const fullInsert = await supabase.from("portfolio_data").insert({
     user_id: userId,
@@ -40,6 +49,7 @@ async function insertPortfolioData(
     experience: portfolio.experience,
     contact: portfolio.contact,
     additional_sections: portfolio.additionalSections,
+    rendered_html: renderedHtml,
   });
 
   if (!fullInsert.error) {
@@ -104,7 +114,7 @@ function formatGenerationError(error: unknown) {
 
   if (
     normalized.includes("column") &&
-    (normalized.includes("highlights") || normalized.includes("additional_sections"))
+    (normalized.includes("highlights") || normalized.includes("additional_sections") || normalized.includes("rendered_html"))
   ) {
     return {
       status: 500,
@@ -193,11 +203,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Upload a PDF resume." }, { status: 400 });
     }
 
-    const template: TemplateId = templateIds.has(templateInput)
-      ? (templateInput as TemplateId)
-      : "modern-developer-dark";
-
     const supabase = createSupabaseAdminClient();
+    let template: TemplateId = "modern-developer-dark";
+    let customTemplateHtml = "";
+
+    if (isBuiltInTemplateId(templateInput)) {
+      template = templateInput;
+    } else if (isCustomTemplateId(templateInput)) {
+      const slug = templateInput.replace(/^custom:/, "");
+      const customTemplateResponse = await supabase
+        .from("portfolio_templates")
+        .select("id, html")
+        .eq("slug", slug)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (isMissingPortfolioTemplatesTableError(customTemplateResponse.error)) {
+        return NextResponse.json(
+          { error: "Run the latest supabase/schema.sql to create the portfolio_templates table." },
+          { status: 500 },
+        );
+      }
+
+      if (customTemplateResponse.error || !customTemplateResponse.data) {
+        return NextResponse.json({ error: "Selected HTML template is no longer available." }, { status: 400 });
+      }
+
+      template = templateInput;
+      customTemplateHtml = customTemplateResponse.data.html ?? "";
+    }
+
     const existing = await supabase.from("users").select("id").eq("username", username).maybeSingle();
 
     if (existing.data) {
@@ -241,6 +276,19 @@ export async function POST(request: Request) {
     }
 
     const portfolio = await transformResumeToPortfolio(parsedPdf.text, fullName);
+    let renderedHtml = "";
+
+    if (isCustomTemplateId(template) && customTemplateHtml.trim()) {
+      renderedHtml = await mergePortfolioIntoUploadedHtml({
+        templateHtml: customTemplateHtml,
+        portfolio,
+        username,
+        resumeUrl: publicUrlData.publicUrl,
+        portfolioUrl: `/${username}`,
+        primaryColor: colorPrimary,
+        secondaryColor: colorSecondary,
+      });
+    }
 
     const userInsert = await supabase
       .from("users")
@@ -261,7 +309,7 @@ export async function POST(request: Request) {
       throw userInsert.error ?? new Error("Unable to create user record.");
     }
 
-    const portfolioInsert = await insertPortfolioData(supabase, userInsert.data.id, portfolio);
+    const portfolioInsert = await insertPortfolioData(supabase, userInsert.data.id, portfolio, renderedHtml);
 
     if (portfolioInsert.error) {
       await supabase.from("users").delete().eq("id", userInsert.data.id);
