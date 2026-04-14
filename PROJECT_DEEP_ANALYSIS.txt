@@ -1,0 +1,846 @@
+# GSR Portfolio Builder - Deep Project Analysis
+
+## 1. Project Summary
+
+This project is a full-stack Next.js 16 App Router application that converts an uploaded PDF resume into a public portfolio website hosted on a dynamic route such as `/username`.
+
+At a high level, the product flow is:
+
+1. A visitor opens the landing page `/`.
+2. The visitor enters a name and username, uploads a PDF resume, and selects a template.
+3. The frontend posts the form to `POST /api/portfolios`.
+4. The backend uploads the PDF to Supabase Storage.
+5. The backend extracts text from the PDF using `pdf-parse`.
+6. Gemini converts the raw resume text into structured portfolio JSON.
+7. The app inserts the user and portfolio data into Supabase PostgreSQL.
+8. The generated portfolio becomes available at `/{username}`.
+9. Admin users can log into `/admin` and manage generated portfolios and uploaded HTML templates.
+
+The project is mainly organized into:
+
+- `app/` for pages, layouts, route handlers, loading screens, and not-found states
+- `components/` for generator UI, admin UI, portfolio actions, and shared UI elements
+- `lib/` for Supabase, Gemini, query helpers, admin auth, template logic, and utilities
+- `templates/` for built-in portfolio layouts
+- `supabase/schema.sql` for the database and storage schema
+
+## 2. Tech Stack
+
+- Framework: Next.js `16.2.3`
+- React: `19.2.4`
+- Styling: Tailwind CSS v4 plus custom global CSS
+- Animation: Framer Motion
+- Icons: Lucide React
+- Database and file storage: Supabase
+- AI parsing and content generation: Google Gemini via `@google/generative-ai`
+- PDF parsing: `pdf-parse`
+- Language: TypeScript
+
+## 3. Architecture Overview
+
+This app uses the App Router structure. Pages are server components by default, while interactive form and dashboard sections are client components.
+
+Important architectural layers:
+
+- Presentation layer:
+  `app/page.tsx`, `app/[username]/page.tsx`, admin pages, and React components
+
+- API layer:
+  `app/api/portfolios/route.ts`
+  `app/api/admin/templates/route.ts`
+  `app/api/admin/templates/[id]/route.ts`
+  `app/api/admin/portfolios/[id]/route.ts`
+
+- Service/helper layer:
+  `lib/gemini.ts`, `lib/queries.ts`, `lib/supabase.ts`, `lib/admin.ts`, `lib/custom-template.ts`, `lib/utils.ts`
+
+- Data layer:
+  Supabase tables `users`, `portfolio_data`, and `portfolio_templates`
+  Supabase Storage bucket `resumes`
+
+## 4. Route-by-Route Analysis
+
+### `/` - Home / Generator Page
+
+File: `app/page.tsx`
+
+Purpose:
+- This is the public landing page and the main portfolio generation entry point.
+
+What users see:
+- A branded glass-style header with logo and CTA
+- A hero section that explains the value proposition
+- A three-step explanation of how the product works
+- Showcase cards that explain benefits and speed
+- Feature cards describing simplicity, shareability, and polished output
+- A generator section with the form and template previews
+
+What happens on page load:
+- The page calls `getGeneratorTemplateCatalog()` on the server.
+- The result is passed to `PortfolioGeneratorForm`.
+- The route is marked `force-dynamic`, so it does not rely on static generation.
+
+UI/UX design:
+- Warm neutral background with green primary and orange secondary accents
+- Soft glassmorphism panels
+- Rounded cards and buttons
+- A non-technical, reassuring tone for first-time users
+- Anchored CTA flow that moves the user from marketing copy to the form
+
+Behavior:
+- The page is mostly informational until the user reaches the form.
+- The form is the actual product engine for resume upload and generation.
+
+### `/template-preview?template=...` - Template Preview Route
+
+File: `app/template-preview/page.tsx`
+
+Purpose:
+- Renders a desktop-style preview of a selected template inside an iframe.
+
+What users see:
+- A full preview canvas of the selected template using demo data.
+
+What happens:
+- If the query param is a built-in template ID, a mock record is built with `createTemplatePreviewRecord()`.
+- If it is a custom template like `custom:slug`, the route fetches the template from Supabase.
+- The page then renders `TemplateRenderer`.
+
+Why it exists:
+- It powers the live template preview frames shown on the generator form.
+
+### `/{username}` - Public Portfolio Page
+
+File: `app/[username]/page.tsx`
+
+Purpose:
+- Displays the generated portfolio website for a specific user.
+
+What users see:
+- A fully rendered portfolio page using either:
+  - a built-in React template, or
+  - a custom uploaded HTML template
+
+What happens:
+- The route gets the `username` from params.
+- It calls `getPortfolioByUsername(username)`.
+- If no portfolio exists, `notFound()` is triggered.
+- If found, CSS variables `--primary-color` and `--secondary-color` are injected from the user record.
+- `TemplateRenderer` chooses the correct built-in or custom template.
+
+SEO behavior:
+- `generateMetadata()` builds dynamic title, description, canonical URL, and Open Graph metadata.
+- The metadata is based on the actual portfolio content stored in the database.
+
+UX notes:
+- The portfolio pages are meant to feel live, shareable, and ready to send to employers or clients.
+- Each template includes action buttons like copy link, download resume, and open live route.
+
+### `/admin/login` - Admin Login
+
+File: `app/admin/login/page.tsx`
+
+Purpose:
+- Entry point for superadmin access.
+
+What users see:
+- A marketing-style split-screen admin login page
+- Benefits cards for operational tasks
+- Email and password fields
+
+What happens:
+- The page checks whether an admin is already logged in via `getAdminUser()`.
+- If already logged in, it redirects to `/admin`.
+- If not, it renders the login form.
+- The form submits to the server action `loginAction`.
+
+Auth model:
+- Admin access is controlled entirely by environment variables and a cookie.
+- Allowed emails come from `ADMIN_EMAILS`.
+- Password comes from `ADMIN_PASSWORD`.
+- If `ADMIN_PASSWORD` is not configured, the app allows email-only admin login.
+
+### `/admin` - Admin Dashboard
+
+Files:
+- `app/admin/(dashboard)/layout.tsx`
+- `app/admin/(dashboard)/page.tsx`
+- `components/admin/admin-dashboard.tsx`
+
+Purpose:
+- Operational control panel for all generated portfolios and custom templates.
+
+What users see:
+- Header with admin identity and logout
+- Dashboard stats
+- Template upload area
+- HTML template library
+- Portfolio list with search, open, and delete controls
+
+What happens:
+- `requireAdminUser()` protects the route.
+- `getAdminDashboardData()` loads:
+  - portfolio count
+  - portfolio rows
+  - custom templates
+- The client dashboard handles searching, uploading templates, editing templates, downloading HTML, and deleting records.
+
+UX behavior:
+- Search is client-side and uses deferred value to reduce UI churn
+- Sections can collapse and expand
+- Destructive actions use `window.confirm`
+- Feedback is shown inline for upload/delete errors and success states
+
+## 5. Loading and Not-Found States
+
+### Global Loading
+
+File: `app/loading.tsx`
+
+- Shows a simple branded loading panel with the logo.
+- Used when the app is resolving route transitions at the root level.
+
+### Global 404
+
+File: `app/not-found.tsx`
+
+- Displays a generic "Page not found" page with a return button to `/`.
+
+### Portfolio Loading
+
+File: `app/[username]/loading.tsx`
+
+- Uses skeleton UI blocks to mimic a portfolio layout while the route loads.
+
+### Portfolio 404
+
+File: `app/[username]/not-found.tsx`
+
+- Displays a more specific message that the portfolio route is not published or may have been removed.
+
+## 6. Frontend Component Analysis
+
+### Portfolio Generator Form
+
+File: `components/generator/portfolio-generator-form.tsx`
+
+This is the most important interactive public component.
+
+What it does:
+- Accepts name, username, resume PDF, and template selection
+- Displays a live hint for the final route like `/goutham`
+- Shows template previews inside iframes
+- Posts form data to `/api/portfolios`
+- Tracks elapsed generation time while waiting
+- Redirects to the generated portfolio URL on success
+
+Important details:
+- Default theme colors are hardcoded in the form:
+  - primary `#0f766e`
+  - secondary `#f97316`
+- Framer Motion is used for entrance and feedback transitions.
+- The component normalizes the username on the fly for the route preview.
+
+UX design:
+- Very guided and linear
+- Low-friction, no account creation
+- Good feedback loops for errors and success
+- Strong template-first selection experience
+
+### Template Preview Frame
+
+File: `components/generator/template-preview-frame.tsx`
+
+What it does:
+- Embeds `/template-preview` inside an iframe
+- Scales the desktop preview responsively so it fits inside a card
+
+UX effect:
+- Gives the feeling of browsing a mini theme marketplace
+- Lets users compare visual styles without leaving the form
+
+### Portfolio Rendering Layer
+
+Files:
+- `components/portfolio/template-renderer.tsx`
+- `components/portfolio/custom-html-template.tsx`
+- `components/portfolio/portfolio-actions.tsx`
+- `components/portfolio/typewriter-role.tsx`
+
+Responsibilities:
+- Decide which template implementation to render
+- Render custom HTML safely via extracted styles, links, and body markup
+- Show action controls like copy link, resume download, and open live page
+- Add animated role typing in the dark developer template
+
+Notable behavior:
+- `TemplateRenderer` chooses built-in templates for known IDs.
+- If the record uses a custom template and that template exists, it renders the HTML-based variant.
+- `CustomHtmlTemplate` injects raw HTML and CSS into the page.
+
+Risk note:
+- Custom templates are stored and rendered as raw HTML, so this area should be treated carefully from a trust and sanitization perspective.
+
+## 7. Built-In Template Design Analysis
+
+The `templates/` folder contains five built-in visual themes. Each template uses the same content data but presents it differently.
+
+### `modern-developer-dark`
+
+Visual style:
+- Dark, premium, developer-focused
+- Glowing blurred color blobs in the background
+- Dark panels and strong contrast
+- Typewriter animation for the role
+
+Content layout:
+- Hero with username, name, animated role, about, highlights, and action buttons
+- Main content split into projects and experience
+- Sidebar with skills, education, contact, and extra sections
+
+Best fit:
+- Developers, engineers, technical founders
+
+### `minimal-clean`
+
+Visual style:
+- Soft white cards
+- Clean editorial spacing
+- Light neutral background
+- Minimal decoration
+
+Content layout:
+- Large top header section
+- Left sidebar for contact, skills, education, extra sections
+- Right content for projects and experience
+
+Best fit:
+- General professionals, consultants, students, business users
+
+### `glassmorphism`
+
+Visual style:
+- Glass panels over a dramatic gradient background
+- Semi-transparent surfaces
+- Futuristic but polished
+
+Content layout:
+- Top frosted hero
+- Left side for projects and experience
+- Right side for skills, education, contact, and extras
+
+Best fit:
+- Modern product/design/creative users
+
+### `creative-designer`
+
+Visual style:
+- Bold contrast between dark sections and warm peach background
+- More expressive, brand-heavy, and visually loud
+- Uses colored blocks and progress-style skill bars
+
+Content layout:
+- Large hero with identity-first presentation
+- Separate contact and highlight panels
+- Project cards, dark experience section, skill percentage bars, education cards
+
+Best fit:
+- Designers, creatives, visual storytellers
+
+### `corporate-professional`
+
+Visual style:
+- Executive, formal, enterprise-friendly
+- Dark left sidebar and structured white content panel
+- Clean card system with understated shadow
+
+Content layout:
+- Left sidebar contains intro, contact, skills, education, and extra sections
+- Main panel contains overview, experience, and project cards
+
+Best fit:
+- Corporate professionals, managers, operations, business roles
+
+## 8. Visual Design System
+
+Main source: `app/globals.css`
+
+### Global Color Palette
+
+The root palette is:
+
+- Background: `#fffdf7`
+- Foreground: `#1a1f0e`
+- Muted text: `#6b7355`
+- Primary color: `#5a9e2f`
+- Secondary color: `#f97316`
+
+The portfolio pages also support per-user colors through CSS variables:
+
+- `--primary-color`
+- `--secondary-color`
+
+These are read from the `users` table and applied on `/{username}` pages.
+
+### Typography
+
+Fonts from `app/layout.tsx`:
+
+- `Sora` for display/headlines
+- `DM Sans` for body text
+
+This combination gives:
+- geometric, sharp headline styling
+- friendly but modern readable body text
+
+### UI Language
+
+The UI system combines:
+
+- warm, inviting background gradients
+- glass surfaces
+- large border radii
+- soft shadows
+- smooth hover transitions
+- rounded full-pill buttons
+
+The overall UX direction is:
+- approachable for non-technical users
+- modern enough to feel premium
+- simple enough to keep the generation flow easy
+
+## 9. Backend API Analysis
+
+### `POST /api/portfolios`
+
+File: `app/api/portfolios/route.ts`
+
+This is the core backend route of the product.
+
+Request expectations:
+- `fullName`
+- `username`
+- `resume` as PDF file
+- `template`
+- optional color fields, though the form currently sets fixed defaults
+
+Main backend flow:
+
+1. Validate environment config.
+2. Parse and normalize form inputs.
+3. Validate that name and username exist.
+4. Validate that resume is a PDF.
+5. Validate selected template.
+6. Check that username does not already exist in `users`.
+7. Reject files larger than 8 MB.
+8. Upload PDF to Supabase Storage bucket `resumes`.
+9. Extract readable text using `pdf-parse`.
+10. If no readable text exists, delete the uploaded PDF and return an error.
+11. Convert resume text into structured JSON with Gemini.
+12. If the template is custom, merge the structured portfolio into the uploaded HTML using Gemini.
+13. Insert a row into `users`.
+14. Insert a row into `portfolio_data`.
+15. Return `{ username, url }`.
+
+Error handling:
+- Missing schema
+- Missing storage bucket
+- invalid Gemini key
+- outdated database columns
+- RLS or permission issues
+- invalid JSON from Gemini
+- cleanup of uploaded file on failure
+
+This route is fairly defensive and includes fallback checks for older schemas.
+
+### `POST /api/admin/templates`
+
+File: `app/api/admin/templates/route.ts`
+
+Purpose:
+- Upload a new custom HTML template.
+
+What it validates:
+- admin session exists
+- template name exists
+- uploaded file ends in `.html`
+- HTML file is not empty
+
+What it stores:
+- `slug`
+- `name`
+- generated description string
+- persona fixed as `"Custom"`
+- empty highlights array
+- raw HTML
+- `is_active = true`
+
+Important practical note:
+- Despite admin UI copy that says AI will clean and prepare the template, this route currently stores the uploaded HTML directly.
+- The helper `transformUploadedHtmlToTemplate()` exists in `lib/gemini.ts` but is not used in this route.
+
+### `PUT /api/admin/templates/[id]`
+
+Purpose:
+- Replace the name and HTML of an existing custom template.
+
+Behavior:
+- admin-only
+- requires a new `.html` file
+- updates name, description, and HTML
+
+### `DELETE /api/admin/templates/[id]`
+
+Purpose:
+- Remove a custom template from the library.
+
+Behavior:
+- admin-only
+- deletes the template row from `portfolio_templates`
+
+### `DELETE /api/admin/portfolios/[id]`
+
+Purpose:
+- Remove a generated portfolio.
+
+Behavior:
+- admin-only
+- fetches the user row
+- derives the file path from the public resume URL
+- removes the resume file from Supabase Storage
+- deletes the `users` row
+- because of `ON DELETE CASCADE`, the `portfolio_data` row is removed automatically
+
+## 10. Database and Storage Analysis
+
+Main source: `supabase/schema.sql`
+
+### Storage Bucket
+
+Bucket:
+- `resumes`
+
+Settings:
+- public bucket
+
+Why public:
+- portfolio pages expose a direct resume download button
+
+### Table: `users`
+
+Purpose:
+- Stores portfolio owner identity and routing information.
+
+Columns:
+- `id`
+- `name`
+- `username` unique
+- `resume_url`
+- `template`
+- `color_primary`
+- `color_secondary`
+- `created_at`
+
+Meaning:
+- This is the top-level record that defines the public route and visual theme.
+
+### Table: `portfolio_data`
+
+Purpose:
+- Stores the structured content extracted from the resume.
+
+Columns:
+- `id`
+- `user_id` unique foreign key to `users`
+- `role`
+- `about`
+- `highlights` JSONB
+- `skills` JSONB
+- `projects` JSONB
+- `education` JSONB
+- `experience` JSONB
+- `contact` JSONB
+- `additional_sections` JSONB
+- `rendered_html`
+
+Meaning:
+- This table holds the real content shown inside the templates.
+- `rendered_html` is mainly relevant for custom HTML templates.
+
+### Table: `portfolio_templates`
+
+Purpose:
+- Stores uploaded HTML templates for admin-managed custom themes.
+
+Columns:
+- `id`
+- `slug`
+- `name`
+- `description`
+- `persona`
+- `highlights`
+- `html`
+- `is_active`
+- `created_at`
+
+Meaning:
+- Lets the app offer custom HTML themes in the template picker.
+
+### Relationships
+
+- `portfolio_data.user_id -> users.id`
+- Delete on `users` cascades into `portfolio_data`
+
+### Indexes
+
+- username lookup
+- recent users
+- recent templates
+- active templates
+
+### Security Notes
+
+- Row level security is enabled on all three tables.
+- However, the app uses the Supabase service role key server-side, so the backend bypasses normal user-level RLS restrictions.
+- This is acceptable for server-only trusted operations, but it means the service key must stay private.
+
+## 11. Query and Data Fetching Layer
+
+Main file: `lib/queries.ts`
+
+Important functions:
+
+- `getPortfolioByUsername(username)`
+  Loads a user plus nested portfolio data and optional custom template.
+
+- `getActiveCustomTemplates()`
+  Returns only active custom templates from Supabase.
+
+- `getGeneratorTemplateCatalog()`
+  Merges built-in template catalog and custom templates.
+
+- `getActiveCustomTemplateBySlug(slug)`
+  Fetches one active custom template.
+
+- `getAdminTemplates()`
+  Fetches all templates for admin management.
+
+- `getAdminDashboardData()`
+  Loads counts, user rows, and templates for `/admin`.
+
+Notable implementation detail:
+- `TEMPLATE_CATALOG` is currently an empty array in `lib/portfolio.ts`.
+- That means the generator route catalog currently depends on uploaded custom templates, even though built-in template rendering code exists in `templates/`.
+
+## 12. Gemini / AI Layer
+
+Main file: `lib/gemini.ts`
+
+This file contains the AI-driven intelligence of the product.
+
+### Resume to structured portfolio
+
+Function:
+- `transformResumeToPortfolio(resumeText, fallbackName)`
+
+Behavior:
+- Sends resume text to Gemini
+- Requests strictly structured JSON
+- Produces name, role, about, highlights, skills, projects, education, experience, contact, and additional sections
+- Sanitizes the result before use
+
+### Model handling
+
+The code:
+- tries configured model plus fallback models
+- can discover available Gemini models by calling Google’s models endpoint
+- retries alternate models on compatibility or permission failures
+
+This is stronger than a one-model-only implementation and improves resilience.
+
+### HTML merge for custom templates
+
+Function:
+- `mergePortfolioIntoUploadedHtml(...)`
+
+Behavior:
+- Sends the original template HTML and real portfolio data to Gemini
+- Asks Gemini to preserve the template’s design language
+- Replaces sample/demo content with real user content
+- Verifies that the returned HTML actually contains customer data signals
+
+This is used during portfolio generation for custom templates.
+
+### Unused helper
+
+Function:
+- `transformUploadedHtmlToTemplate(templateName, html)`
+
+Purpose:
+- Intended to convert arbitrary HTML into a reusable tokenized template descriptor
+
+Current state:
+- Present in code but not wired into the upload API
+
+## 13. Utility and Auth Layer
+
+### `lib/admin.ts`
+
+Responsibilities:
+- parse allowed admin emails
+- determine if password is required
+- read admin session cookie
+- protect admin routes with redirects
+
+Auth mechanism:
+- simple cookie-based admin auth
+- not tied to Supabase Auth or a full auth provider
+
+This is lightweight and easy to run, but not enterprise-grade auth.
+
+### `app/admin/actions.ts`
+
+Server actions:
+- `loginAction`
+- `logoutAction`
+
+Behavior:
+- validate admin email and password rules
+- set/delete `admin-session` cookie
+- redirect appropriately
+
+### `lib/supabase.ts`
+
+Responsibilities:
+- validate env config
+- create a server-side Supabase admin client using the service role key
+
+### `lib/utils.ts`
+
+Useful helpers:
+- `normalizeUsername`
+- `formatDate`
+- `getBaseUrl`
+- JSON extraction and parsing helpers
+- `deriveStoragePath` for storage cleanup
+
+## 14. Current User Journey
+
+### Public generator journey
+
+1. User lands on `/`
+2. User sees benefit-driven content and the portfolio form
+3. User enters name and username
+4. User uploads a PDF
+5. User chooses a template preview
+6. User submits
+7. User waits while timer increments and backend generates content
+8. User is redirected to `/{username}`
+9. User can copy the link or open/download the resume
+
+### Admin journey
+
+1. Admin visits `/admin/login`
+2. Admin signs in
+3. Admin opens `/admin`
+4. Admin can:
+   - search portfolios
+   - delete portfolios
+   - upload HTML templates
+   - edit template name/file
+   - download template HTML
+   - delete templates
+
+## 15. Strengths of the Project
+
+- Clear end-to-end product goal
+- Good separation between public flow, admin flow, and data helpers
+- Nice visual polish on landing page and templates
+- Defensive backend error messages
+- Useful skeleton and not-found states
+- Good use of server-side rendering for portfolio routes
+- Dynamic metadata for SEO
+- Reasonable cleanup logic when generation fails
+- Flexible support for both built-in and uploaded custom templates
+
+## 16. Important Gaps or Mismatches in Current Code
+
+These are especially important if this document is being used for maintenance or handoff.
+
+### Built-in template catalog mismatch
+
+- Built-in template components exist.
+- But `TEMPLATE_CATALOG` is currently `[]`.
+- So the generator catalog may not expose the five built-in templates unless this array is filled elsewhere in the future.
+
+### Admin template upload copy vs actual backend
+
+- The admin UI says AI will clean and prepare uploaded templates.
+- The current upload API simply stores the HTML file directly.
+- The helper that looks intended for AI conversion is not used.
+
+### README mismatch
+
+- README says there are five premium templates available.
+- In the current code path, the exposed template picker data comes from `TEMPLATE_CATALOG` plus custom templates.
+- Since `TEMPLATE_CATALOG` is empty, the README and code do not fully align.
+
+### Security consideration for custom HTML
+
+- Custom templates are stored as raw HTML and rendered into the page.
+- This is powerful, but it assumes trusted admin-uploaded content.
+
+## 17. Best Short Description of the Project
+
+This project is an AI-assisted resume-to-portfolio generator built with Next.js, Supabase, and Gemini. It allows public users to upload a resume PDF and instantly publish a shareable portfolio page on a personal route, while giving admins a lightweight dashboard to manage live portfolios and custom HTML templates.
+
+## 18. Key Files for Future Developers
+
+- `app/page.tsx`
+  Main landing and generator route
+
+- `components/generator/portfolio-generator-form.tsx`
+  Public creation flow
+
+- `app/api/portfolios/route.ts`
+  Core generation backend
+
+- `app/[username]/page.tsx`
+  Public portfolio route
+
+- `components/portfolio/template-renderer.tsx`
+  Template selection layer
+
+- `templates/*.tsx`
+  Built-in visual themes
+
+- `app/admin/(dashboard)/page.tsx`
+  Admin route entry
+
+- `components/admin/admin-dashboard.tsx`
+  Admin UI behavior
+
+- `app/api/admin/templates/*`
+  Custom template management
+
+- `lib/gemini.ts`
+  AI transformation logic
+
+- `lib/queries.ts`
+  Database query layer
+
+- `supabase/schema.sql`
+  Storage and database setup
+
+## 19. Final Conclusion
+
+This is a solid portfolio-generation SaaS-style project with a clear product story, polished frontend presentation, and a useful AI-backed backend workflow. Its strongest qualities are the shareable dynamic portfolio route, the multiple visual presentation modes, the clear admin controls, and the practical PDF-to-structured-content pipeline.
+
+The biggest implementation details to remember are:
+
+- portfolio content is generated through a PDF -> text -> Gemini -> Supabase pipeline
+- live pages are served from `/{username}`
+- admin auth is simple cookie-based auth driven by environment variables
+- Supabase stores both resume files and portfolio records
+- custom HTML templates are supported, but currently stored/rendered more directly than the UI copy suggests
+- built-in templates exist visually, but the template catalog wiring currently looks incomplete
