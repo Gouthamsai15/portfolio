@@ -195,7 +195,7 @@ export function normalizeHexColor(value: string | null | undefined, fallback: st
 }
 
 export function isBuiltInTemplateId(value: string): value is BuiltInTemplateId {
-  return builtInTemplateIds.has(value as TemplateId);
+  return builtInTemplateIds.has(value as BuiltInTemplateId);
 }
 
 export function isCustomTemplateId(value: string): value is `custom:${string}` {
