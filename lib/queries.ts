@@ -177,6 +177,30 @@ export async function getGeneratorTemplateCatalog() {
   return [...TEMPLATE_CATALOG, ...customTemplates];
 }
 
+export async function getActiveCustomTemplateBySlug(slug: string) {
+  if (!hasSupabaseConfig()) {
+    return null;
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const response = await supabase
+    .from("portfolio_templates")
+    .select("id, slug, name, description, persona, highlights, html, is_active, created_at")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (hasMissingCustomTemplatesTableError(response.error)) {
+    return null;
+  }
+
+  if (response.error || !response.data) {
+    return null;
+  }
+
+  return normalizeCustomTemplateRow(response.data);
+}
+
 export async function getAdminTemplates() {
   if (!hasSupabaseConfig()) {
     return [] as CustomTemplateRecord[];

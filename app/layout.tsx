@@ -29,9 +29,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${sora.variable} ${dmSans.variable} h-full antialiased`}
+      className={`${sora.variable} ${dmSans.variable} root-html`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="root-body">{children}</body>
     </html>
   );
 }

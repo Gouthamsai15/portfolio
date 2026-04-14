@@ -92,50 +92,15 @@ export interface CustomTemplateRecord {
   created_at: string;
 }
 
-export const TEMPLATE_CATALOG: TemplateCatalogItem[] = [
-  {
-    id: "modern-developer-dark",
-    name: "Modern Developer Dark",
-    description: "Neon-led, motion-rich layout for engineers and technical creators.",
-    persona: "Technical",
-    highlights: ["typing hero", "dark canvas", "glow panels"],
-    source: "built-in",
-  },
-  {
-    id: "minimal-clean",
-    name: "Minimal Clean",
-    description: "Quiet luxury with refined spacing and editorial typography.",
-    persona: "Minimal",
-    highlights: ["soft contrast", "clean grid", "editorial rhythm"],
-    source: "built-in",
-  },
-  {
-    id: "glassmorphism",
-    name: "Glassmorphism",
-    description: "Gradient atmosphere with frosted panels and luminous depth.",
-    persona: "Futuristic",
-    highlights: ["blur cards", "floating layers", "light bloom"],
-    source: "built-in",
-  },
-  {
-    id: "creative-designer",
-    name: "Creative Designer",
-    description: "Expressive, bold composition for visually driven personal brands.",
-    persona: "Creative",
-    highlights: ["oversized type", "asymmetric layout", "animated accents"],
-    source: "built-in",
-  },
-  {
-    id: "corporate-professional",
-    name: "Corporate Professional",
-    description: "Polished resume-style presentation for consultants and leaders.",
-    persona: "Formal",
-    highlights: ["two-column layout", "structured timeline", "executive tone"],
-    source: "built-in",
-  },
-];
+export const TEMPLATE_CATALOG: TemplateCatalogItem[] = [];
 
-const builtInTemplateIds = new Set<TemplateId>(TEMPLATE_CATALOG.map((template) => template.id));
+const builtInTemplateIds = new Set<BuiltInTemplateId>([
+  "modern-developer-dark",
+  "minimal-clean",
+  "glassmorphism",
+  "creative-designer",
+  "corporate-professional",
+]);
 
 export const THEME_PRESETS = [
   { name: "Ocean Signal", primary: "#0f766e", secondary: "#f97316" },

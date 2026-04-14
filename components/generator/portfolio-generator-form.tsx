@@ -5,6 +5,7 @@ import { CheckCircle2, Clock3, LoaderCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, useEffect, useState, type FormEvent } from "react";
+import { TemplatePreviewFrame } from "@/components/generator/template-preview-frame";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { type TemplateCatalogItem, type TemplateId } from "@/lib/portfolio";
@@ -25,6 +26,7 @@ export function PortfolioGeneratorForm({
 }: {
   templates: TemplateCatalogItem[];
 }) {
+  const hasTemplates = templates.length > 0;
   const router = useRouter();
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>(
     templates[0]?.id ?? "modern-developer-dark",
@@ -52,6 +54,12 @@ export function PortfolioGeneratorForm({
     setSuccessUrl("");
     setElapsedSeconds(0);
     setIsSubmitting(true);
+
+    if (!hasTemplates) {
+      setError("No templates are available right now. Ask the admin to upload an HTML template.");
+      setIsSubmitting(false);
+      return;
+    }
 
     formData.set("template", selectedTemplate);
     formData.set("colorPrimary", defaultPrimaryColor);
@@ -97,28 +105,28 @@ export function PortfolioGeneratorForm({
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
+    <div className="portfolio-form-shell">
       <motion.form
         initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.25 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
         onSubmit={handleFormSubmit}
-        className="glass-panel space-y-5 rounded-[1.75rem] p-4 sm:space-y-6 sm:rounded-[2rem] sm:p-7"
+        className="glass-panel portfolio-form"
       >
-        <div className="space-y-2">
-          <p className="font-display text-xl font-semibold text-slate-950 sm:text-2xl">Create portfolio</p>
-          <p className="text-xs leading-6 text-muted sm:text-sm">
+        <div className="portfolio-form__intro">
+          <p className="portfolio-form__title">Create portfolio</p>
+          <p className="portfolio-form__text">
             No signup required. Just upload the resume and generate the site.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-2 text-sm font-medium text-slate-800">
+        <div className="form-grid">
+          <label className="form-label">
             Full Name
             <Input name="fullName" required placeholder="Goutham Raj" autoComplete="name" />
           </label>
-          <label className="space-y-2 text-sm font-medium text-slate-800">
+          <label className="form-label">
             Username
             <Input
               name="username"
@@ -130,58 +138,68 @@ export function PortfolioGeneratorForm({
           </label>
         </div>
 
-        <div className="rounded-[1.5rem] border border-black/8 bg-white/72 p-4 sm:rounded-3xl">
-          <label className="space-y-3 text-sm font-medium text-slate-800">
+        <div className="form-upload-box">
+          <label className="form-label">
             Upload Resume (PDF)
             <Input
               name="resume"
               type="file"
               accept="application/pdf"
               required
-              className="cursor-pointer file:mr-4 file:rounded-full file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+              className="ui-file-input"
             />
           </label>
-          <p className="mt-2 break-all text-xs text-muted">
-            Public portfolio route: <span className="font-semibold text-slate-900">/{usernameHint || "username"}</span>
+          <p className="portfolio-form__route">
+            Public portfolio route: <strong>/{usernameHint || "username"}</strong>
           </p>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="font-display text-lg font-semibold text-slate-950 sm:text-xl">Choose your template</h3>
-            <span className="w-fit rounded-full bg-slate-950 px-3 py-1 text-xs font-medium text-white">
+        <div className="portfolio-form__section">
+          <div className="portfolio-form__section-head">
+            <h3 className="portfolio-form__section-title">Choose your template</h3>
+            <span className="portfolio-form__count">
               {templates.length} styles
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:gap-3">
-            {templates.map((template) => {
-              const isActive = template.id === selectedTemplate;
+          {hasTemplates ? (
+            <div className="template-grid">
+              {templates.map((template) => {
+                const isActive = template.id === selectedTemplate;
 
-              return (
-                <button
-                  key={template.id}
-                  type="button"
-                  onClick={() => setSelectedTemplate(template.id)}
-                  className={cn(
-                    "rounded-[1rem] border px-3 py-3 text-left sm:rounded-3xl sm:px-4 sm:py-4",
-                    isActive
-                      ? "border-[var(--primary-color)] bg-slate-950 text-white shadow-xl shadow-slate-950/10"
-                      : "border-black/8 bg-white/72 text-slate-900 hover:border-black/18",
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-display text-sm font-semibold sm:text-lg">{template.name}</p>
-                      <p className={cn("mt-1 text-xs leading-5 sm:text-sm sm:leading-6", isActive ? "text-white/72" : "text-muted")}>
-                        {template.description}
-                      </p>
+                return (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => setSelectedTemplate(template.id)}
+                    className={cn(
+                      "template-card",
+                      isActive && "template-card--active",
+                    )}
+                  >
+                    <div className="template-card__preview">
+                      <TemplatePreviewFrame
+                        title={`${template.name} preview`}
+                        src={`/template-preview?template=${encodeURIComponent(template.id)}`}
+                      />
                     </div>
-                    {isActive ? <CheckCircle2 className="mt-1 h-5 w-5 text-[var(--secondary-color)]" /> : null}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                    <div className="template-card__row">
+                      <div>
+                        <p className="template-card__title">{template.name}</p>
+                        <p className="template-card__text">
+                          {template.description}
+                        </p>
+                      </div>
+                      {isActive ? <CheckCircle2 className="mt-1 h-5 w-5 text-[var(--secondary-color)]" /> : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="feedback-message feedback-message--error">
+              No templates are available right now. Ask the admin to upload an HTML template.
+            </p>
+          )}
         </div>
 
         <AnimatePresence mode="wait">
@@ -191,7 +209,7 @@ export function PortfolioGeneratorForm({
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700 sm:text-sm"
+              className="feedback-message feedback-message--error"
             >
               {error}
             </motion.p>
@@ -202,7 +220,7 @@ export function PortfolioGeneratorForm({
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800 sm:text-sm"
+              className="feedback-message feedback-message--success"
             >
               Portfolio created at{" "}
               <Link href={successUrl} className="font-semibold underline underline-offset-4">
@@ -219,24 +237,24 @@ export function PortfolioGeneratorForm({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="rounded-[1.5rem] border border-[var(--primary-color)]/20 bg-[var(--primary-color)]/6 px-4 py-4"
+              className="loading-state"
               aria-live="polite"
             >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-900">Generating your portfolio</p>
-                  <p className="text-xs leading-6 text-muted sm:text-sm">
+              <div className="loading-state__row">
+                <div className="loading-state__intro">
+                  <p className="loading-state__title">Generating your portfolio</p>
+                  <p className="loading-state__text">
                     We are processing your resume and building your portfolio page now.
                   </p>
                 </div>
-                <div className="flex w-fit items-center gap-2 rounded-full bg-white/80 px-3 py-2 text-xs font-semibold text-slate-900 shadow-sm">
+                <div className="loading-state__timer">
                   <Clock3 className="h-4 w-4 text-[var(--primary-color)]" />
                   {formatElapsedTime(elapsedSeconds)}
                 </div>
               </div>
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/80">
+              <div className="loading-state__bar">
                 <motion.div
-                  className="h-full rounded-full bg-[var(--primary-color)]"
+                  className="loading-state__bar-fill"
                   initial={{ x: "-100%" }}
                   animate={{ x: ["-100%", "0%", "100%"] }}
                   transition={{ duration: 1.4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
@@ -247,12 +265,12 @@ export function PortfolioGeneratorForm({
           ) : null}
         </AnimatePresence>
 
-        <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+        <Button type="submit" size="lg" className="button-block" disabled={isSubmitting || !hasTemplates}>
           {isSubmitting ? (
             <>
               <LoaderCircle className="h-4 w-4 animate-spin" />
               <span>Generating Portfolio</span>
-              <span className="rounded-full bg-white/12 px-2 py-1 text-xs font-medium text-white/85">
+              <span className="submit-timer-chip">
                 {formatElapsedTime(elapsedSeconds)}
               </span>
             </>

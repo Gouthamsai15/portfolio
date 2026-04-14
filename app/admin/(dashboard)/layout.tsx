@@ -14,29 +14,26 @@ export default async function AdminDashboardLayout({
   const user = await requireAdminUser();
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-4 sm:gap-8 sm:px-8 sm:py-8">
-      <header className="glass-panel flex flex-col gap-4 rounded-[2rem] p-6 sm:flex-row sm:items-center sm:justify-between">
+    <main className="admin-layout">
+      <header className="glass-panel admin-layout__header">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--primary-color)]">
-            GSR ERP Admin
-          </p>
-          <h1 className="mt-3 font-display text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+          <p className="admin-layout__eyebrow">GSR ERP Admin</p>
+          <h1 className="admin-layout__title">
             Portfolio Operations Dashboard
           </h1>
-          <p className="mt-2 text-sm leading-6 text-muted">
+          <p className="admin-layout__text">
             Signed in as {user.email ?? "admin"}.
           </p>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <Link href="/" className={buttonStyles({ variant: "secondary" }) + " w-full sm:w-auto"}>
+        <div className="admin-layout__actions">
+          <Link href="/" className={buttonStyles({ variant: "secondary" })}>
             Back to Generator
           </Link>
-          <form action={logoutAction} className="w-full sm:w-auto">
+          <form action={logoutAction}>
             <LoadingSubmitButton
               idleLabel="Sign Out"
               pendingLabel="Signing Out..."
               size="md"
-              className="w-full sm:w-auto"
             />
           </form>
         </div>

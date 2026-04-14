@@ -204,7 +204,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = createSupabaseAdminClient();
-    let template: TemplateId = "modern-developer-dark";
+    let template: TemplateId | null = null;
     let customTemplateHtml = "";
 
     if (isBuiltInTemplateId(templateInput)) {
@@ -231,6 +231,10 @@ export async function POST(request: Request) {
 
       template = templateInput;
       customTemplateHtml = customTemplateResponse.data.html ?? "";
+    }
+
+    if (!template) {
+      return NextResponse.json({ error: "Select an available template before generating." }, { status: 400 });
     }
 
     const existing = await supabase.from("users").select("id").eq("username", username).maybeSingle();
