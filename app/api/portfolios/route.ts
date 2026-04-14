@@ -12,7 +12,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase";
 import { normalizeUsername } from "@/lib/utils";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function isMissingPortfolioTemplatesTableError(error: unknown) {
   const message = getErrorMessage(error).toLowerCase();

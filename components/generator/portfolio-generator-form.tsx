@@ -71,10 +71,24 @@ export function PortfolioGeneratorForm({
         body: formData,
       });
 
-      const payload = (await response.json().catch(() => ({}))) as {
+      const rawBody = await response.text();
+      let payload: {
         error?: string;
         url?: string;
-      };
+      } = {};
+
+      if (rawBody) {
+        try {
+          payload = JSON.parse(rawBody) as {
+            error?: string;
+            url?: string;
+          };
+        } catch {
+          payload = {
+            error: rawBody.slice(0, 240).trim(),
+          };
+        }
+      }
 
       if (!response.ok || !payload.url) {
         setError(payload.error ?? "Portfolio generation failed. Please try again.");
@@ -87,8 +101,15 @@ export function PortfolioGeneratorForm({
       startTransition(() => {
         router.push(payload.url!);
       });
-    } catch {
-      setError("Something went wrong while generating the portfolio. Please try again.");
+    } catch (error) {
+      const fallbackMessage =
+        error instanceof Error && error.message
+          ? error.message.toLowerCase().includes("failed to fetch")
+            ? "The generation request timed out or lost connection before the server responded. Please try again."
+            : error.message
+          : "The request could not reach the server. Please try again.";
+
+      setError(fallbackMessage);
       setIsSubmitting(false);
       setElapsedSeconds(0);
     }
