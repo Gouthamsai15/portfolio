@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Clock3, Globe2, Upload } from "lucide-react";
 import { PortfolioGeneratorForm } from "@/components/generator/portfolio-generator-form";
 import { buttonStyles } from "@/components/ui/button";
+import logoMark from "@/images/logo-mark.png";
 import { getGeneratorTemplateCatalog } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -13,9 +15,18 @@ export default async function Home() {
     <main className="site-shell home-page">
       <div className="home-container">
         <header className="glass-panel home-header">
-          <div>
-            <p className="home-header__title">GSR Portfolio Builder</p>
-            <p className="home-header__subtitle">Resume To Portfolio Website</p>
+          <div className="home-header__brand">
+            <Image
+              src={logoMark}
+              alt="GSR Portfolio Builder logo"
+              className="home-header__logo"
+              sizes="(max-width: 767px) 34px, 48px"
+              priority
+            />
+            <div>
+              <p className="home-header__title">GSR Portfolio Builder</p>
+              <p className="home-header__subtitle">Resume To Portfolio Website</p>
+            </div>
           </div>
           <Link href="#generate" className={buttonStyles({ size: "sm" }) + " home-header__cta"}>
             Create Your Portfolio
