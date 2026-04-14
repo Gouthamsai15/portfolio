@@ -156,10 +156,10 @@ export function PortfolioGeneratorForm({
 
         <div className="portfolio-form__section">
           <div className="portfolio-form__section-head">
-            <h3 className="portfolio-form__section-title">Choose your template</h3>
             <span className="portfolio-form__count">
               {templates.length} styles
             </span>
+            <h3 className="portfolio-form__section-title">Choose your template</h3>
           </div>
           {hasTemplates ? (
             <div className="template-grid">
