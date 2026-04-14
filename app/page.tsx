@@ -17,7 +17,7 @@ export default async function Home() {
             <p className="home-header__title">GSR Portfolio Builder</p>
             <p className="home-header__subtitle">Resume To Portfolio Website</p>
           </div>
-          <Link href="#generate" className={buttonStyles({ size: "sm" })}>
+          <Link href="#generate" className={buttonStyles({ size: "sm" }) + " home-header__cta"}>
             Create Your Portfolio
           </Link>
         </header>
